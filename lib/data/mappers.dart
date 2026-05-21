@@ -1,25 +1,26 @@
 import 'app_database.dart' as db;
-import '../models/insumo.dart' as model;
-import '../models/lote.dart' as model;
-import '../models/solicitud.dart' as model;
-import '../models/alerta.dart' as model;
-import '../models/movimiento.dart' as model;
+import '../models/enums.dart' as enums;
+import '../models/insumo.dart' as insumo_model;
+import '../models/lote.dart' as lote_model;
+import '../models/solicitud.dart' as solicitud_model;
+import '../models/alerta.dart' as alerta_model;
+import '../models/movimiento.dart' as movimiento_model;
 
-model.Insumo insumoFromDb(db.Insumo row) {
-  return model.Insumo(
+insumo_model.Insumo insumoFromDb(db.Insumo row) {
+  return insumo_model.Insumo(
     id: row.id,
     name: row.name,
     unit: row.unit,
     totalQuantity: row.totalQuantity,
-    status: model.InventoryStatus.values.byName(row.status),
+    status: enums.InventoryStatus.values.byName(row.status),
     lowStockThreshold: row.lowStockThreshold,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    syncStatus: model.SyncStatus.values.byName(row.syncStatus),
+    syncStatus: enums.SyncStatus.values.byName(row.syncStatus),
   );
 }
 
-db.Insumo insumoToDb(model.Insumo insumo) {
+db.Insumo insumoToDb(insumo_model.Insumo insumo) {
   return db.Insumo(
     id: insumo.id,
     name: insumo.name,
@@ -33,19 +34,19 @@ db.Insumo insumoToDb(model.Insumo insumo) {
   );
 }
 
-model.Lote loteFromDb(db.Lote row) {
-  return model.Lote(
+lote_model.Lote loteFromDb(db.Lote row) {
+  return lote_model.Lote(
     id: row.id,
     insumoId: row.insumoId,
     quantity: row.quantity,
     expirationDate: row.expirationDate,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    syncStatus: model.SyncStatus.values.byName(row.syncStatus),
+    syncStatus: enums.SyncStatus.values.byName(row.syncStatus),
   );
 }
 
-db.Lote loteToDb(model.Lote lote) {
+db.Lote loteToDb(lote_model.Lote lote) {
   return db.Lote(
     id: lote.id,
     insumoId: lote.insumoId,
@@ -57,22 +58,22 @@ db.Lote loteToDb(model.Lote lote) {
   );
 }
 
-model.Solicitud solicitudFromDb(db.Solicitud row) {
-  return model.Solicitud(
+solicitud_model.Solicitud solicitudFromDb(db.Solicitud row) {
+  return solicitud_model.Solicitud(
     id: row.id,
     insumoId: row.insumoId,
     requestedBy: row.requestedBy,
     quantity: row.quantity,
-    status: model.SolicitudStatus.values.byName(row.status),
+    status: enums.SolicitudStatus.values.byName(row.status),
     reviewerId: row.reviewerId,
     rejectionReason: row.rejectionReason,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    syncStatus: model.SyncStatus.values.byName(row.syncStatus),
+    syncStatus: enums.SyncStatus.values.byName(row.syncStatus),
   );
 }
 
-db.Solicitud solicitudToDb(model.Solicitud solicitud) {
+db.Solicitud solicitudToDb(solicitud_model.Solicitud solicitud) {
   return db.Solicitud(
     id: solicitud.id,
     insumoId: solicitud.insumoId,
@@ -87,19 +88,19 @@ db.Solicitud solicitudToDb(model.Solicitud solicitud) {
   );
 }
 
-model.Alerta alertaFromDb(db.Alerta row) {
-  return model.Alerta(
+alerta_model.Alerta alertaFromDb(db.Alerta row) {
+  return alerta_model.Alerta(
     id: row.id,
     insumoId: row.insumoId,
-    type: model.AlertType.values.byName(row.type),
+    type: enums.AlertType.values.byName(row.type),
     message: row.message,
     createdAt: row.createdAt,
     resolved: row.resolved,
-    syncStatus: model.SyncStatus.values.byName(row.syncStatus),
+    syncStatus: enums.SyncStatus.values.byName(row.syncStatus),
   );
 }
 
-db.Alerta alertaToDb(model.Alerta alerta) {
+db.Alerta alertaToDb(alerta_model.Alerta alerta) {
   return db.Alerta(
     id: alerta.id,
     insumoId: alerta.insumoId,
@@ -111,20 +112,20 @@ db.Alerta alertaToDb(model.Alerta alerta) {
   );
 }
 
-model.Movimiento movimientoFromDb(db.Movimiento row) {
-  return model.Movimiento(
+movimiento_model.Movimiento movimientoFromDb(db.Movimiento row) {
+  return movimiento_model.Movimiento(
     id: row.id,
     insumoId: row.insumoId,
     loteId: row.loteId,
-    type: model.MovementType.values.byName(row.type),
+    type: enums.MovementType.values.byName(row.type),
     quantity: row.quantity,
     createdBy: row.createdBy,
     createdAt: row.createdAt,
-    syncStatus: model.SyncStatus.values.byName(row.syncStatus),
+    syncStatus: enums.SyncStatus.values.byName(row.syncStatus),
   );
 }
 
-db.Movimiento movimientoToDb(model.Movimiento movimiento) {
+db.Movimiento movimientoToDb(movimiento_model.Movimiento movimiento) {
   return db.Movimiento(
     id: movimiento.id,
     insumoId: movimiento.insumoId,

@@ -63,61 +63,80 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text('Iniciar sesion'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Correo'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'El correo es obligatorio.';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Correo invalido.';
-                  }
-                  return null;
-                },
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: AutofillGroup(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Bienvenido',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ingresa con tu correo institucional.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.username],
+                    decoration: const InputDecoration(labelText: 'Correo'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'El correo es obligatorio.';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Correo invalido.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: const InputDecoration(labelText: 'Contrasena'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'La contrasena es obligatoria.';
+                      }
+                      if (value.length < 6) {
+                        return 'Minimo 6 caracteres.';
+                      }
+                      return null;
+                    },
+                    onFieldSubmitted: (_) => _submit(),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_error != null) ...[
+                    Text(
+                      _error!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  FilledButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Ingresar'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contrasena'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'La contrasena es obligatoria.';
-                  }
-                  if (value.length < 6) {
-                    return 'Minimo 6 caracteres.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_error != null) ...[
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-                const SizedBox(height: 12),
-              ],
-              FilledButton(
-                onPressed: _isSubmitting ? null : _submit,
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Ingresar'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

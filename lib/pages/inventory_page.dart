@@ -82,6 +82,7 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   Widget build(BuildContext context) {
     final stream = ServiceRegistry.insumos.watchLocal();
+    final lastSyncNotifier = ServiceRegistry.syncState.lastSyncAt;
 
     return Scaffold(
       appBar: AppBar(
@@ -96,6 +97,19 @@ class _InventoryPageState extends State<InventoryPage> {
       ),
       body: Column(
         children: [
+          ValueListenableBuilder<DateTime?>(
+            valueListenable: lastSyncNotifier,
+            builder: (context, lastSyncAt, _) {
+              if (lastSyncAt == null) {
+                return const SizedBox.shrink();
+              }
+              final label = lastSyncAt.toLocal().toString().split('.').first;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text('Ultima sincronizacion: $label'),
+              );
+            },
+          ),
           if (_syncError != null)
             MaterialBanner(
               content: Text(_syncError!),

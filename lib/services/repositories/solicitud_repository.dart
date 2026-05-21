@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../data/app_database.dart';
+import '../../data/app_database.dart' as db;
 import '../../data/daos/solicitud_dao.dart';
 import '../../data/mappers.dart';
 import '../../models/enums.dart';
@@ -11,7 +11,7 @@ class SolicitudRepository {
       : _dao = SolicitudDao(_db),
         _collection = (firestore ?? FirebaseFirestore.instance).collection('solicitudes');
 
-  final AppDatabase _db;
+  final db.AppDatabase _db;
   final SolicitudDao _dao;
   final CollectionReference<Map<String, dynamic>> _collection;
 

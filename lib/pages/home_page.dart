@@ -120,6 +120,12 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Gestion de inventario'),
                 onTap: () => Navigator.of(context).pushNamed(AppRoutes.inventory),
               ),
+            if (canManageInventory)
+              ListTile(
+                leading: const Icon(Icons.bar_chart),
+                title: const Text('Reportes de inventario'),
+                onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
+              ),
             if (canCreateSolicitud)
               ListTile(
                 leading: const Icon(Icons.assignment),

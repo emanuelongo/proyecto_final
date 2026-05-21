@@ -8,6 +8,7 @@ import 'repositories/solicitud_repository.dart';
 import 'sync_service.dart';
 import 'movement_service.dart';
 import 'solicitud_service.dart';
+import 'sync_state.dart';
 
 class ServiceRegistry {
   static final AppDatabase db = AppDatabase();
@@ -31,11 +32,13 @@ class ServiceRegistry {
     solicitudRepository: solicitudes,
     movementService: movementService,
   );
+  static final SyncState syncState = SyncState();
   static final SyncService syncService = SyncService(
     insumoRepository: insumos,
     loteRepository: lotes,
     solicitudRepository: solicitudes,
     alertaRepository: alertas,
     movimientoRepository: movimientos,
+    syncState: syncState,
   );
 }

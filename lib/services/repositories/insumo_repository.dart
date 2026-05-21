@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../data/app_database.dart';
+import '../../data/app_database.dart' as db;
 import '../../data/daos/insumo_dao.dart';
 import '../../data/mappers.dart';
 import '../../models/insumo.dart';
@@ -16,7 +16,7 @@ class InsumoRepository {
         _collection = (firestore ?? FirebaseFirestore.instance).collection('insumos'),
         _inventoryService = inventoryService;
 
-  final AppDatabase _db;
+  final db.AppDatabase _db;
   final InsumoDao _dao;
   final CollectionReference<Map<String, dynamic>> _collection;
   final InventoryService? _inventoryService;

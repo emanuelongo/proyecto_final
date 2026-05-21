@@ -20,14 +20,18 @@ class InventoryService {
       threshold: insumo.lowStockThreshold,
     );
 
-    if (!shouldAlert) {
-      return;
-    }
-
     final existing = await _alertaRepository.getOpenByInsumoAndType(
       insumo.id,
       AlertType.lowStock,
     );
+
+    if (!shouldAlert) {
+      if (existing != null) {
+        await _alertaRepository.resolveAlert(existing.id);
+      }
+      return;
+    }
+
     if (existing != null) {
       return;
     }

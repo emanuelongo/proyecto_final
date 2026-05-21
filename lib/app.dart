@@ -12,6 +12,7 @@ import 'pages/create_solicitud_page.dart';
 import 'pages/insumo_detail_page.dart';
 import 'pages/movement_page.dart';
 import 'pages/users_page.dart';
+import 'pages/reports_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -35,6 +36,7 @@ class App extends StatelessWidget {
         AppRoutes.solicitudes: (context) => const SolicitudesPage(),
         AppRoutes.createSolicitud: (context) => const CreateSolicitudPage(),
         AppRoutes.users: (context) => const UsersPage(),
+        AppRoutes.reports: (context) => const ReportsPage(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == AppRoutes.insumoDetail) {
