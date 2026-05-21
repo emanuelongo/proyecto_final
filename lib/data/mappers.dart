@@ -58,7 +58,7 @@ db.Lote loteToDb(lote_model.Lote lote) {
   );
 }
 
-solicitud_model.Solicitud solicitudFromDb(db.Solicitud row) {
+solicitud_model.Solicitud solicitudFromDb(db.Solicitude row) {
   return solicitud_model.Solicitud(
     id: row.id,
     insumoId: row.insumoId,
@@ -73,8 +73,8 @@ solicitud_model.Solicitud solicitudFromDb(db.Solicitud row) {
   );
 }
 
-db.Solicitud solicitudToDb(solicitud_model.Solicitud solicitud) {
-  return db.Solicitud(
+db.Solicitude solicitudToDb(solicitud_model.Solicitud solicitud) {
+  return db.Solicitude(
     id: solicitud.id,
     insumoId: solicitud.insumoId,
     requestedBy: solicitud.requestedBy,

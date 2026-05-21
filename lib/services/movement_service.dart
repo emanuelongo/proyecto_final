@@ -72,7 +72,7 @@ class MovementService {
     final lotes = await _loteRepository.getByInsumo(insumo.id);
     final availableQty = lotes
         .where((lote) => !_rulesService.isLoteExpired(lote) && lote.quantity > 0)
-        .fold<int>(0, (sum, lote) => sum + lote.quantity);
+      .fold<int>(0, (sum, lote) => sum + lote.quantity.toInt());
 
     if (!_rulesService.validateStock(availableQty, quantity)) {
       throw StateError('Stock insuficiente en lotes vigentes.');

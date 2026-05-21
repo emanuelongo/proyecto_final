@@ -24,7 +24,12 @@ class AlertaRepository {
   }
 
   Future<Alerta?> getOpenByInsumoAndType(String insumoId, AlertType type) {
-    return _dao.getOpenByInsumoAndType(insumoId, type.name);
+    return _dao.getOpenByInsumoAndType(insumoId, type.name).then((row) {
+      if (row == null) {
+        return null;
+      }
+      return alertaFromDb(row);
+    });
   }
 
   Future<void> upsertLocal(Alerta alerta, {bool markPending = false}) async {

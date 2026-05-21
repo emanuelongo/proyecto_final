@@ -64,7 +64,12 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(route);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed(route);
+    });
   }
 
   Future<void> _logout() async {
