@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../data/app_database.dart';
+import '../../data/app_database.dart' as db;
 import '../../data/daos/alerta_dao.dart';
 import '../../data/mappers.dart';
 import '../../models/alerta.dart';
@@ -11,7 +11,7 @@ class AlertaRepository {
       : _dao = AlertaDao(_db),
         _collection = (firestore ?? FirebaseFirestore.instance).collection('alertas');
 
-  final AppDatabase _db;
+  final db.AppDatabase _db;
   final AlertaDao _dao;
   final CollectionReference<Map<String, dynamic>> _collection;
 
@@ -30,6 +30,10 @@ class AlertaRepository {
   Future<void> upsertLocal(Alerta alerta, {bool markPending = false}) async {
     final value = markPending ? alerta.copyWith(syncStatus: SyncStatus.pendingSync) : alerta;
     await _dao.upsert(alertaToDb(value));
+  }
+
+  Future<void> resolveAlert(String id) async {
+    await _dao.resolveAlert(id, syncStatus: SyncStatus.pendingSync.name);
   }
 
   Future<void> pullRemote() async {

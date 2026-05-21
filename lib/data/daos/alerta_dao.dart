@@ -11,10 +11,6 @@ class AlertaDao {
     return _db.select(_db.alertas).watch();
   }
 
-  Stream<List<Alerta>> watchAll() {
-    return _db.select(_db.alertas).watch();
-  }
-
   Stream<List<Alerta>> watchByInsumo(String insumoId) {
     return (_db.select(_db.alertas)..where((tbl) => tbl.insumoId.equals(insumoId))).watch();
   }
@@ -30,9 +26,12 @@ class AlertaDao {
     await _db.into(_db.alertas).insertOnConflictUpdate(alerta);
   }
 
-  Future<void> resolveAlert(String id) async {
+  Future<void> resolveAlert(String id, {String syncStatus = 'pendingSync'}) async {
     await (_db.update(_db.alertas)..where((tbl) => tbl.id.equals(id))).write(
-      const AlertasCompanion(resolved: Value(true)),
+      AlertasCompanion(
+        resolved: const Value(true),
+        syncStatus: Value(syncStatus),
+      ),
     );
   }
 

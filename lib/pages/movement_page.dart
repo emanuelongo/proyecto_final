@@ -105,80 +105,92 @@ class _MovementPageState extends State<MovementPage> {
       appBar: AppBar(
         title: const Text('Registrar movimiento'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Insumo: ${insumo.name}'),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<MovementType>(
-                value: _type,
-                items: const [
-                  DropdownMenuItem(
-                    value: MovementType.outbound,
-                    child: Text('Salida'),
-                  ),
-                  DropdownMenuItem(
-                    value: MovementType.inbound,
-                    child: Text('Entrada'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _type = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Tipo de movimiento'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _quantityController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Cantidad'),
-                validator: (value) {
-                  final parsed = int.tryParse(value ?? '');
-                  if (parsed == null || parsed <= 0) {
-                    return 'Cantidad invalida.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              if (_type == MovementType.inbound)
-                OutlinedButton.icon(
-                  onPressed: _pickDate,
-                  icon: const Icon(Icons.event),
-                  label: Text(
-                    _expirationDate == null
-                        ? 'Seleccionar vencimiento'
-                        : 'Vence: ${_expirationDate!.toLocal().toString().split(' ').first}',
-                  ),
-                ),
-              const SizedBox(height: 16),
-              if (_error != null) ...[
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  'Insumo: ${insumo.name}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Registra entradas o salidas con control de lotes.',
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 12),
+                DropdownButtonFormField<MovementType>(
+                  value: _type,
+                  items: const [
+                    DropdownMenuItem(
+                      value: MovementType.outbound,
+                      child: Text('Salida'),
+                    ),
+                    DropdownMenuItem(
+                      value: MovementType.inbound,
+                      child: Text('Entrada'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) {
+                      return;
+                    }
+                    setState(() {
+                      _type = value;
+                    });
+                  },
+                  decoration: const InputDecoration(labelText: 'Tipo de movimiento'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _quantityController,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(labelText: 'Cantidad'),
+                  validator: (value) {
+                    final parsed = int.tryParse(value ?? '');
+                    if (parsed == null || parsed <= 0) {
+                      return 'Cantidad invalida.';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 12),
+                if (_type == MovementType.inbound)
+                  OutlinedButton.icon(
+                    onPressed: _pickDate,
+                    icon: const Icon(Icons.event),
+                    label: Text(
+                      _expirationDate == null
+                          ? 'Seleccionar vencimiento'
+                          : 'Vence: ${_expirationDate!.toLocal().toString().split(' ').first}',
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                if (_error != null) ...[
+                  Text(
+                    _error!,
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                FilledButton(
+                  onPressed: _submitting ? null : _submit,
+                  child: _submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Guardar'),
+                ),
               ],
-              FilledButton(
-                onPressed: _submitting ? null : _submit,
-                child: _submitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Guardar'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

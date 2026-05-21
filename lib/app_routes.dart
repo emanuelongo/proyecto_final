@@ -10,4 +10,5 @@ class AppRoutes {
   static const insumoDetail = '/inventory/insumo';
   static const movement = '/inventory/movement';
   static const users = '/users';
+  static const reports = '/reports';
 }
