@@ -42,7 +42,12 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
     final user = _authService.currentUser;
     if (user == null) {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+        });
       }
       return;
     }

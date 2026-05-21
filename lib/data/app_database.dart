@@ -1,10 +1,6 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:drift_flutter/drift_flutter.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
+
+import 'database_connection.dart';
 
 part 'app_database.g.dart';
 
@@ -92,17 +88,9 @@ class Alertas extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(path.join(dir.path, 'app_database.sqlite'));
-    return NativeDatabase(file);
-  });
-}
-
 @DriftDatabase(tables: [Users, Insumos, Lotes, Movimientos, Solicitudes, Alertas])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(openConnection());
 
   @override
   int get schemaVersion => 1;

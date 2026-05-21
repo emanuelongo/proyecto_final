@@ -1,19 +1,19 @@
-import '../app_database.dart';
+import '../app_database.dart' as db;
 
 class InsumoDao {
   InsumoDao(this._db);
 
-  final AppDatabase _db;
+  final db.AppDatabase _db;
 
-  Stream<List<Insumo>> watchAll() {
+  Stream<List<db.Insumo>> watchAll() {
     return _db.select(_db.insumos).watch();
   }
 
-  Future<Insumo?> getById(String id) {
+  Future<db.Insumo?> getById(String id) {
     return (_db.select(_db.insumos)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
-  Future<void> upsert(Insumo insumo) async {
+  Future<void> upsert(db.Insumo insumo) async {
     await _db.into(_db.insumos).insertOnConflictUpdate(insumo);
   }
 
@@ -21,11 +21,11 @@ class InsumoDao {
     await (_db.delete(_db.insumos)..where((tbl) => tbl.id.equals(id))).go();
   }
 
-  Stream<List<Insumo>> watchByStatus(String status) {
+  Stream<List<db.Insumo>> watchByStatus(String status) {
     return (_db.select(_db.insumos)..where((tbl) => tbl.status.equals(status))).watch();
   }
 
-  Future<List<Insumo>> getPendingSync() {
+  Future<List<db.Insumo>> getPendingSync() {
     return (_db.select(_db.insumos)..where((tbl) => tbl.syncStatus.equals('pendingSync'))).get();
   }
 }

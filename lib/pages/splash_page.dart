@@ -55,7 +55,12 @@ class _SplashPageState extends State<SplashPage> {
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacementNamed(route);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed(route);
+    });
   }
 
   @override
