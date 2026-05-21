@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -56,9 +58,9 @@ class Insumo {
       id: (map['id'] ?? '').toString(),
       name: (map['name'] ?? '').toString(),
       unit: (map['unit'] ?? '').toString(),
-      totalQuantity: (map['totalQuantity'] ?? 0) as int,
+      totalQuantity: intFromValue(map['totalQuantity']),
       status: status,
-      lowStockThreshold: (map['lowStockThreshold'] ?? 0) as int,
+      lowStockThreshold: intFromValue(map['lowStockThreshold']),
       createdAt: dateFromValue(map['createdAt']),
       updatedAt: dateFromValue(map['updatedAt']),
       syncStatus: syncStatus,
@@ -73,8 +75,8 @@ class Insumo {
       'totalQuantity': totalQuantity,
       'status': status.name,
       'lowStockThreshold': lowStockThreshold,
-      'createdAt': dateToString(createdAt),
-      'updatedAt': dateToString(updatedAt),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
+      'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'syncStatus': syncStatus.name,
     };
   }

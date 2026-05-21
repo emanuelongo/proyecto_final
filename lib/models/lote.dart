@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -46,7 +48,7 @@ class Lote {
     return Lote(
       id: (map['id'] ?? '').toString(),
       insumoId: (map['insumoId'] ?? '').toString(),
-      quantity: (map['quantity'] ?? 0) as int,
+      quantity: intFromValue(map['quantity']),
       expirationDate: dateFromValue(map['expirationDate']),
       createdAt: dateFromValue(map['createdAt']),
       updatedAt: dateFromValue(map['updatedAt']),
@@ -59,9 +61,9 @@ class Lote {
       'id': id,
       'insumoId': insumoId,
       'quantity': quantity,
-      'expirationDate': dateToString(expirationDate),
-      'createdAt': dateToString(createdAt),
-      'updatedAt': dateToString(updatedAt),
+      'expirationDate': expirationDate == null ? null : Timestamp.fromDate(expirationDate!),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
+      'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'syncStatus': syncStatus.name,
     };
   }

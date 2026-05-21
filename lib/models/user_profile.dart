@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -63,8 +65,8 @@ class UserProfile {
       'email': email,
       'role': role.name,
       'status': status.name,
-      'createdAt': dateToString(createdAt),
-      'lastLoginAt': dateToString(lastLoginAt),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
+      'lastLoginAt': lastLoginAt == null ? null : Timestamp.fromDate(lastLoginAt!),
     };
   }
 }

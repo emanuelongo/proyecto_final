@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -61,7 +63,7 @@ class Alerta {
       'insumoId': insumoId,
       'type': type.name,
       'message': message,
-      'createdAt': dateToString(createdAt),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
       'resolved': resolved,
       'syncStatus': syncStatus.name,
     };

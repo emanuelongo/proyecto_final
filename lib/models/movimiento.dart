@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -53,7 +55,7 @@ class Movimiento {
       insumoId: (map['insumoId'] ?? '').toString(),
       loteId: map['loteId']?.toString(),
       type: type,
-      quantity: (map['quantity'] ?? 0) as int,
+      quantity: intFromValue(map['quantity']),
       createdBy: (map['createdBy'] ?? '').toString(),
       createdAt: dateFromValue(map['createdAt']),
       syncStatus: syncStatus,
@@ -68,7 +70,7 @@ class Movimiento {
       'type': type.name,
       'quantity': quantity,
       'createdBy': createdBy,
-      'createdAt': dateToString(createdAt),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
       'syncStatus': syncStatus.name,
     };
   }
