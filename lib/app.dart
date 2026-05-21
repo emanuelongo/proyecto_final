@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'app_routes.dart';
 import 'pages/blocked_page.dart';
 import 'pages/home_page.dart';
+import 'pages/inventory_page.dart';
 import 'pages/login_page.dart';
 import 'pages/pending_approval_page.dart';
+import 'pages/solicitudes_page.dart';
 import 'pages/splash_page.dart';
+import 'pages/create_solicitud_page.dart';
+import 'pages/insumo_detail_page.dart';
+import 'pages/movement_page.dart';
+import 'pages/users_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -25,6 +31,29 @@ class App extends StatelessWidget {
         AppRoutes.pendingApproval: (context) => const PendingApprovalPage(),
         AppRoutes.blocked: (context) => const BlockedPage(),
         AppRoutes.home: (context) => const HomePage(),
+        AppRoutes.inventory: (context) => const InventoryPage(),
+        AppRoutes.solicitudes: (context) => const SolicitudesPage(),
+        AppRoutes.createSolicitud: (context) => const CreateSolicitudPage(),
+        AppRoutes.users: (context) => const UsersPage(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == AppRoutes.insumoDetail) {
+          final args = settings.arguments;
+          if (args is InsumoDetailArgs) {
+            return MaterialPageRoute(
+              builder: (_) => InsumoDetailPage(insumo: args.insumo),
+            );
+          }
+        }
+        if (settings.name == AppRoutes.movement) {
+          final args = settings.arguments;
+          if (args is MovementArgs) {
+            return MaterialPageRoute(
+              builder: (_) => MovementPage(insumo: args.insumo),
+            );
+          }
+        }
+        return null;
       },
     );
   }

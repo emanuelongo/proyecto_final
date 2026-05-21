@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'enums.dart';
 import 'model_utils.dart';
 
@@ -61,7 +63,7 @@ class Solicitud {
       id: (map['id'] ?? '').toString(),
       insumoId: (map['insumoId'] ?? '').toString(),
       requestedBy: (map['requestedBy'] ?? '').toString(),
-      quantity: (map['quantity'] ?? 0) as int,
+      quantity: intFromValue(map['quantity']),
       status: status,
       reviewerId: map['reviewerId']?.toString(),
       rejectionReason: map['rejectionReason']?.toString(),
@@ -80,8 +82,8 @@ class Solicitud {
       'status': status.name,
       'reviewerId': reviewerId,
       'rejectionReason': rejectionReason,
-      'createdAt': dateToString(createdAt),
-      'updatedAt': dateToString(updatedAt),
+      'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
+      'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'syncStatus': syncStatus.name,
     };
   }
