@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import '../app_routes.dart';
 import '../models/enums.dart';
@@ -15,6 +16,8 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   final AuthService _authService = AuthService();
   final UserProfileService _profileService = UserProfileService();
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -23,31 +26,59 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _bootstrap() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     final user = _authService.currentUser;
     if (user == null) {
       _goTo(AppRoutes.login);
       return;
     }
 
-    final profile = await _profileService.fetchProfile(user.uid);
-    if (!mounted) {
-      return;
-    }
-    if (profile == null) {
-      _goTo(AppRoutes.login);
-      return;
-    }
+    try {
+      final profile = await _profileService.fetchProfile(user.uid).timeout(
+            const Duration(seconds: 10),
+          );
+      if (!mounted) {
+        return;
+      }
+      if (profile == null) {
+        setState(() {
+          _loading = false;
+          _error = 'Perfil no encontrado. Verifica Firestore.';
+        });
+        return;
+      }
 
-    switch (profile.status) {
-      case AccountStatus.pendingApproval:
-        _goTo(AppRoutes.pendingApproval);
-        break;
-      case AccountStatus.blocked:
-        _goTo(AppRoutes.blocked);
-        break;
-      case AccountStatus.active:
-        _goTo(AppRoutes.home);
-        break;
+      switch (profile.status) {
+        case AccountStatus.pendingApproval:
+          _goTo(AppRoutes.pendingApproval);
+          break;
+        case AccountStatus.blocked:
+          _goTo(AppRoutes.blocked);
+          break;
+        case AccountStatus.active:
+          _goTo(AppRoutes.home);
+          break;
+      }
+    } on FirebaseException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _error = 'Error Firestore: ${error.code}';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _error = 'No se pudo cargar el perfil: $error';
+      });
     }
   }
 
@@ -65,9 +96,21 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: _loading
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_error ?? 'Error desconocido'),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: _bootstrap,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
       ),
     );
   }
