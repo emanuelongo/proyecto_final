@@ -10,7 +10,7 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text(label),
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withValues(alpha: 0.15),
       side: BorderSide(color: color),
       labelStyle: TextStyle(color: color),
     );

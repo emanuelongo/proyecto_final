@@ -124,7 +124,7 @@ class _MovementPageState extends State<MovementPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<MovementType>(
-                  value: _type,
+                  initialValue: _type,
                   items: const [
                     DropdownMenuItem(
                       value: MovementType.outbound,

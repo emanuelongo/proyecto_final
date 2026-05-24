@@ -71,7 +71,7 @@ class InsumoDetailPage extends StatelessWidget {
                         }
                         return ListView.separated(
                           itemCount: lotes.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final lote = lotes[index];
                             return _LoteCard(lote: lote);
@@ -91,7 +91,7 @@ class InsumoDetailPage extends StatelessWidget {
                         }
                         return ListView.separated(
                           itemCount: movimientos.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final movimiento = movimientos[index];
                             return _MovimientoCard(movimiento: movimiento);

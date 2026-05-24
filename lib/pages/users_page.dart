@@ -57,7 +57,7 @@ class UsersPage extends StatelessWidget {
                 },
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemCount: docs.length,
           );
         },
@@ -128,7 +128,7 @@ class _UserCardState extends State<_UserCard> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<UserRole>(
-                    value: _role,
+                    initialValue: _role,
                     items: UserRole.values
                         .map(
                           (role) => DropdownMenuItem(
@@ -151,7 +151,7 @@ class _UserCardState extends State<_UserCard> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<AccountStatus>(
-                    value: _status,
+                    initialValue: _status,
                     items: AccountStatus.values
                         .map(
                           (status) => DropdownMenuItem(

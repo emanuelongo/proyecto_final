@@ -202,7 +202,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                       ),
                     );
                   },
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemCount: items.length,
                 );
               },

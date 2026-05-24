@@ -5,6 +5,7 @@ import '../app_routes.dart';
 import '../models/enums.dart';
 import '../services/auth_service.dart';
 import '../services/user_profile_service.dart';
+import '../services/service_registry.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -52,6 +53,9 @@ class _SplashPageState extends State<SplashPage> {
         return;
       }
 
+      // Iniciar sincronización en background después de autenticación exitosa
+      _attemptSync();
+
       switch (profile.status) {
         case AccountStatus.pendingApproval:
           _goTo(AppRoutes.pendingApproval);
@@ -80,6 +84,20 @@ class _SplashPageState extends State<SplashPage> {
         _error = 'No se pudo cargar el perfil: $error';
       });
     }
+  }
+
+  Future<void> _attemptSync() async {
+    try {
+      // Se ejecuta en background, no espera respuesta
+      unawaited(ServiceRegistry.syncService.syncAll());
+    } catch (_) {
+      // Ignorar errores de sync en splash, se reintentará después
+    }
+  }
+
+  void unawaited(Future<void> future) {
+    // Ejecutar future sin esperar
+    future.ignore();
   }
 
   void _goTo(String route) {

@@ -145,7 +145,7 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<Insumo>(
-                      value: _selected,
+                      initialValue: _selected,
                       items: insumos
                           .map(
                             (insumo) => DropdownMenuItem(

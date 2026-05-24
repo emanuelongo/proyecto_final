@@ -122,7 +122,7 @@ class _BarRow extends StatelessWidget {
             child: Container(
               height: 10,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Align(
