@@ -43,7 +43,7 @@ class _InventoryPageState extends State<InventoryPage> {
     try {
       await ServiceRegistry.syncService.syncAll();
     } catch (e) {
-      _syncError = 'No se pudo sincronizar.';
+      _syncError = 'Sin conexión. Trabajando con datos locales.';
     } finally {
       if (mounted) {
         setState(() {
@@ -112,6 +112,7 @@ class _InventoryPageState extends State<InventoryPage> {
           ),
           if (_syncError != null)
             MaterialBanner(
+              leading: const Icon(Icons.wifi_off),
               content: Text(_syncError!),
               actions: [
                 TextButton(onPressed: _sync, child: const Text('Reintentar')),

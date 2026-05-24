@@ -36,3 +36,23 @@ Fecha: 2026-05-21
 Adjuntar capturas o logs de 'flutter test' al entregar.
 
 La idea es que no digan “Usuario pendingApproval: ve pantalla de espera” si todavía no lo pudieron probar manualmente. Mejor dejarlo como **implementado en widget test, pendiente de validación manual por acceso a Firestore**.
+
+
+### Inventario y lotes -
+
+Se validaron los estados visuales del inventario:
+
+- Cargando: se muestra `LoadingState`.
+- Vacío: se muestra “No hay insumos registrados.”
+- Error: se muestra “Error al cargar inventario.”
+- Offline: si falla la sincronización, se muestra “Sin conexión. Trabajando con datos locales.”
+- PendingSync: los insumos muestran su estado mediante `SyncStatusChip`.
+
+También se agregaron unit tests en `test/unit/inventory_rules_test.dart` para validar:
+
+- Un lote vencido no puede usarse.
+- Un lote vigente sí puede usarse.
+- No se puede solicitar más cantidad de la disponible.
+- El stock bajo genera condición de alerta.
+- Cantidad cero queda como agotado.
+- Cantidad baja queda como stock bajo.
