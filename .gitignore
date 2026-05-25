@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local docs
+sustentacion_guion.md
+
+
+
 # Symbolication related
 app.*.symbols
 
