@@ -1,0 +1,283 @@
+import 'package:flutter/material.dart';
+
+import '../app_routes.dart';
+import '../models/user_profile.dart';
+import '../models/solicitud.dart';
+import '../models/enums.dart';
+import '../services/auth_service.dart';
+import '../services/permission_service.dart';
+import '../services/service_registry.dart';
+import '../services/user_profile_service.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
+import '../widgets/loading_state.dart';
+import '../widgets/status_chip.dart';
+import '../widgets/sync_status_chip.dart';
+
+class SolicitudesPage extends StatefulWidget {
+  const SolicitudesPage({super.key});
+
+  @override
+  State<SolicitudesPage> createState() => _SolicitudesPageState();
+}
+
+class _SolicitudesPageState extends State<SolicitudesPage> {
+  final AuthService _authService = AuthService();
+  final UserProfileService _profileService = UserProfileService();
+  final PermissionService _permissionService = const PermissionService();
+  bool _syncing = false;
+  String? _syncError;
+  UserProfile? _profile;
+  String? _userId;
+  bool _loadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+    _sync();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+        });
+      }
+      return;
+    }
+
+    final profile = await _profileService.fetchProfile(user.uid);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _profile = profile;
+      _userId = user.uid;
+      _loadingProfile = false;
+    });
+  }
+
+  Future<void> _sync() async {
+    setState(() {
+      _syncing = true;
+      _syncError = null;
+    });
+    try {
+      await ServiceRegistry.syncService.syncAll();
+    } catch (e) {
+      _syncError = 'No se pudo sincronizar.';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _syncing = false;
+        });
+      }
+    }
+  }
+
+  Color _statusColor(SolicitudStatus status) {
+    switch (status) {
+      case SolicitudStatus.requested:
+        return Colors.blueGrey;
+      case SolicitudStatus.approved:
+        return Colors.green;
+      case SolicitudStatus.rejected:
+        return Colors.red;
+    }
+  }
+
+  String _statusLabel(SolicitudStatus status) {
+    switch (status) {
+      case SolicitudStatus.requested:
+        return 'Solicitado';
+      case SolicitudStatus.approved:
+        return 'Aprobado';
+      case SolicitudStatus.rejected:
+        return 'Rechazado';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loadingProfile) {
+      return const Scaffold(body: LoadingState());
+    }
+
+    final profile = _profile;
+    final userId = _userId;
+    if (profile == null || userId == null) {
+      return const Scaffold(
+        body: Center(child: Text('Sin perfil activo.')),
+      );
+    }
+
+    final canApprove = _permissionService.canApproveSolicitud(profile);
+    final stream = canApprove
+        ? ServiceRegistry.solicitudes.watchLocal()
+        : ServiceRegistry.solicitudes.watchByRequester(userId);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Solicitudes'),
+        actions: [
+          IconButton(
+            onPressed: _syncing ? null : _sync,
+            icon: const Icon(Icons.sync),
+            tooltip: 'Sincronizar',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva'),
+      ),
+      body: Column(
+        children: [
+          ValueListenableBuilder<DateTime?>(
+            valueListenable: ServiceRegistry.syncState.lastSyncAt,
+            builder: (context, lastSyncAt, _) {
+              if (lastSyncAt == null) {
+                return const SizedBox.shrink();
+              }
+              final label = lastSyncAt.toLocal().toString().split('.').first;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text('Ultima sincronizacion: $label'),
+              );
+            },
+          ),
+          if (_syncError != null)
+            MaterialBanner(
+              content: Text(_syncError!),
+              actions: [
+                TextButton(onPressed: _sync, child: const Text('Reintentar')),
+              ],
+            ),
+          Expanded(
+            child: StreamBuilder<List<Solicitud>>(
+              stream: stream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingState();
+                }
+                if (snapshot.hasError) {
+                  return ErrorState(
+                    message: 'Error al cargar solicitudes.',
+                    onRetry: _sync,
+                  );
+                }
+                final items = snapshot.data ?? [];
+                if (items.isEmpty) {
+                  return const EmptyState(message: 'No hay solicitudes registradas.');
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text('Solicitud ${item.id}'),
+                        subtitle: Text('Cantidad: ${item.quantity}'),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            StatusChip(
+                              label: _statusLabel(item.status),
+                              color: _statusColor(item.status),
+                            ),
+                            const SizedBox(height: 6),
+                            SyncStatusChip(status: item.syncStatus),
+                          ],
+                        ),
+                        onTap: canApprove && item.status == SolicitudStatus.requested
+                            ? () => _showReviewDialog(item, profile)
+                            : null,
+                      ),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemCount: items.length,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showReviewDialog(Solicitud solicitud, UserProfile profile) async {
+    final reasonController = TextEditingController();
+    final result = await showDialog<_ReviewAction>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Revision de solicitud'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Cantidad solicitada: ${solicitud.quantity}'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                decoration: const InputDecoration(
+                  labelText: 'Motivo de rechazo (si aplica)',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_ReviewAction.reject),
+              child: const Text('Rechazar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(_ReviewAction.approve),
+              child: const Text('Aprobar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    try {
+      if (result == _ReviewAction.approve) {
+        final insumo = await ServiceRegistry.insumos.getById(solicitud.insumoId);
+        if (insumo == null) {
+          throw StateError('Insumo no encontrado.');
+        }
+        await ServiceRegistry.solicitudService.approveSolicitud(
+          solicitud: solicitud,
+          insumo: insumo,
+          reviewerId: profile.uid,
+        );
+      } else {
+        await ServiceRegistry.solicitudService.rejectSolicitud(
+          solicitud: solicitud,
+          reviewerId: profile.uid,
+          reason: reasonController.text,
+        );
+      }
+      await ServiceRegistry.syncService.syncAll();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _syncError = 'No se pudo actualizar la solicitud.';
+        });
+      }
+    }
+  }
+}
+
+enum _ReviewAction { approve, reject }
