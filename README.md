@@ -110,9 +110,78 @@ Login -> consultar insumos -> crear solicitud -> validar stock -> enviar solicit
 - Drift/SQLite con tablas para users, insumos, lotes, movimientos, solicitudes y alertas.
 - syncStatus: synced, pendingSync, failedSync.
 
-## Sincronizacion
-- Escritura local -> intento de envio a Firestore.
-- Si falla, queda pendingSync y se reintenta desde la UI de inventario/solicitudes.
+## Sincronizacion (Offline-First)
+
+### Cómo funciona
+
+La app usa un modelo **offline-first**:
+
+1. **Escritura Local:** Todo se guarda primero en SQLite local con `syncStatus = pendingSync`
+2. **Intento de Sync:** SyncService intenta enviar a Firestore si hay conexión
+3. **Estados posibles:**
+   - `synced` -  Datos están en Firestore y local
+   - `pendingSync` -  Datos locales pero no en Firestore (sin internet o en progreso)
+   - `failedSync` -  Falló el envío (error de validación, permisos, etc.)
+
+### Flujo detallado
+
+```
+Acción del usuario
+    ↓
+Guardar en SQLite (syncStatus=pendingSync)
+    ↓
+Mostrar "Sincronizando..." en UI
+    ↓
+SyncService.syncAll() intenta:
+    1. Push (pendingSync → Firestore)
+    2. Pull (Firestore → local)
+    ↓
+¿Hay conexión?
+    SÍ → Intenta enviar con reintentos exponenciales (500ms, 1s, 2s)
+    NO → Espera reconexión, reintenta automáticamente
+    ↓
+¿Envío exitoso?
+    SÍ → syncStatus = synced 
+    NO → syncStatus = failedSync  (Usuario puede reintentar)
+```
+
+### Reintentos automáticos
+
+- **Intervalo:** 500ms × 2^(intento-1)
+  - Intento 1: 500ms
+  - Intento 2: 1s
+  - Intento 3: 2s
+- **Máximo:** 3 reintentos por defecto
+- **Desencadenante:** 
+  - Se ejecuta al abrir app (splash_page)
+  - Se ejecuta al cambiar conexión (connectivity_plus)
+  - Usuario puede forzar con botón "Reintentar"
+
+### Datos pendientes en UI
+
+- **Chip de estado:** Muestra rojo si `syncStatus != synced`
+- **Offline indicator:** Barra roja en top si sin internet
+- **Notificación:** Toast cuando se completa sync exitoso
+- **Acciones:** Botón "Reintentar" visible en items con `failedSync`
+
+### Ejemplo: Crear solicitud sin internet
+
+1. Usuario: "Crear solicitud de 50ml Reactivo A"
+2. App: Guarda en SQLite con `syncStatus = pendingSync`
+3. UI: Muestra chip naranja "Sincronizando..."
+4. Usuario: Sale del wifi
+5. App: Mantiene `syncStatus = pendingSync` localmente
+6. Usuario: Vuelve a conectarse
+7. App: SyncService detecta cambio de conexión, ejecuta `syncAll()`
+8. Firestore: Recibe solicitud, aprueba/rechaza
+9. App: Actualiza a `syncStatus = synced` con estado de solicitud
+
+### Firestore sync rules
+
+```javascript
+// Solo se sincan datos con syncStatus válido
+// Se validan permisos por rol/estado antes de escribir
+```
 
 ## Instrucciones de ejecucion
 1. Instala dependencias:
