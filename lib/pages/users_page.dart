@@ -4,19 +4,34 @@ import '../models/enums.dart';
 import '../services/user_admin_service.dart';
 import '../widgets/loading_state.dart';
 
-class UsersPage extends StatelessWidget {
+class UsersPage extends StatefulWidget {
   const UsersPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final service = UserAdminService();
+  State<UsersPage> createState() => _UsersPageState();
+}
 
+class _UsersPageState extends State<UsersPage> {
+  // 1. Declaramos el servicio y el stream fuera del build
+  final UserAdminService _service = UserAdminService();
+  late Stream _usersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    // 2. Lo inicializamos una única vez aquí
+    _usersStream = _service.watchUsers();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Usuarios'),
       ),
       body: StreamBuilder(
-        stream: service.watchUsers(),
+        // 3. Usamos la variable persistente en el StreamBuilder
+        stream: _usersStream, 
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingState();
@@ -32,6 +47,8 @@ class UsersPage extends StatelessWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
+            itemCount: docs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = Map<String, dynamic>.from(doc.data() as Map<String, dynamic>);
@@ -39,8 +56,7 @@ class UsersPage extends StatelessWidget {
               final name = (data['name'] ?? '').toString();
               final email = (data['email'] ?? '').toString();
               final role = UserRole.values.byName((data['role'] ?? 'auxiliar').toString());
-              final status =
-                  AccountStatus.values.byName((data['status'] ?? 'pendingApproval').toString());
+              final status = AccountStatus.values.byName((data['status'] ?? 'pendingApproval').toString());
 
               return _UserCard(
                 uid: uid,
@@ -49,7 +65,8 @@ class UsersPage extends StatelessWidget {
                 role: role,
                 status: status,
                 onUpdate: (updatedRole, updatedStatus) async {
-                  await service.updateUser(
+                  // 4. Usamos la misma instancia persistente para actualizar
+                  await _service.updateUser(
                     uid: uid,
                     role: updatedRole,
                     status: updatedStatus,
@@ -57,8 +74,6 @@ class UsersPage extends StatelessWidget {
                 },
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemCount: docs.length,
           );
         },
       ),
