@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../models/enums.dart';
@@ -5,6 +6,7 @@ import '../models/alerta.dart';
 import '../models/insumo.dart';
 import '../app_routes.dart';
 import '../services/service_registry.dart';
+import '../services/sync_service.dart';
 import '../widgets/alert_list.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
@@ -32,25 +34,52 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   void initState() {
     super.initState();
-    _sync();
+    _sync(silent: true);
   }
 
-  Future<void> _sync() async {
+  Future<void> _sync({bool silent = false}) async {
     setState(() {
       _syncing = true;
-      _syncError = null;
+      if (!silent) {
+        _syncError = null;
+      }
     });
     try {
       await ServiceRegistry.syncService.syncAll();
-    } catch (e) {
-      _syncError = 'Sin conexión. Trabajando con datos locales.';
+      if (mounted && !silent) {
+        setState(() => _syncError = null);
+      }
+    } on FirebaseException catch (e) {
+      if (!silent && mounted) {
+        setState(() => _syncError = _messageForFirestoreError(e));
+      }
+    } on SyncException catch (e) {
+      if (!silent && mounted) {
+        setState(() => _syncError = _messageForSyncException(e));
+      }
+    } catch (_) {
+      if (!silent && mounted) {
+        setState(() => _syncError = 'No se pudo sincronizar la copia local.');
+      }
     } finally {
       if (mounted) {
-        setState(() {
-          _syncing = false;
-        });
+        setState(() => _syncing = false);
       }
     }
+  }
+
+  String _messageForFirestoreError(FirebaseException e) {
+    if (e.code == 'permission-denied') {
+      return 'Sin permiso en Firestore. Revisa las reglas publicadas.';
+    }
+    return 'Error de Firestore (${e.code}).';
+  }
+
+  String _messageForSyncException(SyncException e) {
+    if (e.failedCollections.contains('insumos') || e.failedCollections.contains('lotes')) {
+      return 'No se pudo actualizar inventario: ${e.failedCollections.join(', ')}.';
+    }
+    return 'Copia local parcial (${e.failedCollections.join(', ')}). El inventario en linea sigue disponible.';
   }
 
   Color _inventoryColor(InventoryStatus status) {
@@ -81,18 +110,28 @@ class _InventoryPageState extends State<InventoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    final stream = ServiceRegistry.insumos.watchLocal();
+    final stream = ServiceRegistry.insumos.watchRemote();
     final lastSyncNotifier = ServiceRegistry.syncState.lastSyncAt;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventario'),
         actions: [
-          IconButton(
-            onPressed: _syncing ? null : _sync,
-            icon: const Icon(Icons.sync),
-            tooltip: 'Sincronizar',
-          ),
+          if (_syncing)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            IconButton(
+              onPressed: () => _sync(),
+              icon: const Icon(Icons.sync),
+              tooltip: 'Sincronizar copia local',
+            ),
         ],
       ),
       body: Column(
@@ -105,18 +144,42 @@ class _InventoryPageState extends State<InventoryPage> {
               }
               final label = lastSyncAt.toLocal().toString().split('.').first;
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text('Ultima sincronizacion: $label'),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Ultima copia local: $label',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               );
             },
           ),
           if (_syncError != null)
-            MaterialBanner(
-              leading: const Icon(Icons.wifi_off),
-              content: Text(_syncError!),
-              actions: [
-                TextButton(onPressed: _sync, child: const Text('Reintentar')),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Material(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                  title: Text(
+                    _syncError!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      fontSize: 13,
+                    ),
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => _sync(),
+                    child: const Text('Reintentar'),
+                  ),
+                ),
+              ),
             ),
           Expanded(
             child: StreamBuilder<List<Insumo>>(
@@ -126,9 +189,13 @@ class _InventoryPageState extends State<InventoryPage> {
                   return const LoadingState();
                 }
                 if (snapshot.hasError) {
+                  final error = snapshot.error;
+                  final message = error is FirebaseException
+                      ? _messageForFirestoreError(error)
+                      : 'Error al cargar inventario.';
                   return ErrorState(
-                    message: 'Error al cargar inventario.',
-                    onRetry: _sync,
+                    message: message,
+                    onRetry: () => _sync(),
                   );
                 }
                 final items = snapshot.data ?? [];
@@ -146,28 +213,16 @@ class _InventoryPageState extends State<InventoryPage> {
                           return AlertList(alertas: alertas);
                         }
                         final item = items[index - 1];
-                        return Card(
-                          child: ListTile(
-                            title: Text(item.name),
-                            subtitle: Text('Cantidad: ${item.totalQuantity} ${item.unit}'),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                StatusChip(
-                                  label: _inventoryLabel(item.status),
-                                  color: _inventoryColor(item.status),
-                                ),
-                                const SizedBox(height: 6),
-                                SyncStatusChip(status: item.syncStatus),
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.of(context).pushNamed(
-                                AppRoutes.insumoDetail,
-                                arguments: InsumoDetailArgs(item),
-                              );
-                            },
-                          ),
+                        return _InsumoCard(
+                          insumo: item,
+                          statusLabel: _inventoryLabel(item.status),
+                          statusColor: _inventoryColor(item.status),
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                              AppRoutes.insumoDetail,
+                              arguments: InsumoDetailArgs(item),
+                            );
+                          },
                         );
                       },
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -179,6 +234,59 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InsumoCard extends StatelessWidget {
+  const _InsumoCard({
+    required this.insumo,
+    required this.statusLabel,
+    required this.statusColor,
+    required this.onTap,
+  });
+
+  final Insumo insumo;
+  final String statusLabel;
+  final Color statusColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                insumo.name.trim(),
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${insumo.totalQuantity} ${insumo.unit}',
+                style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  StatusChip(label: statusLabel, color: statusColor),
+                  if (insumo.syncStatus != SyncStatus.synced)
+                    SyncStatusChip(status: insumo.syncStatus),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
