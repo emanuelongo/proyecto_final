@@ -25,6 +25,17 @@ class InsumoRepository {
     return _dao.watchAll().map((rows) => rows.map(insumoFromDb).toList());
   }
 
+  /// Lectura en vivo desde Firestore (inventario en web y movil).
+  Stream<List<Insumo>> watchRemote() {
+    return _collection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['id'] = data['id'] ?? doc.id;
+        return Insumo.fromMap(data);
+      }).toList();
+    });
+  }
+
   Future<Insumo?> getById(String id) async {
     final row = await _dao.getById(id);
     if (row == null) {

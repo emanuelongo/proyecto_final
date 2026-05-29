@@ -146,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Reportes de inventario'),
                 onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
               ),
-            if (canCreateSolicitud)
+            if (AppRoutes.solicitudesEnabled && canCreateSolicitud)
               ListTile(
                 leading: const Icon(Icons.assignment),
                 title: const Text('Solicitudes'),

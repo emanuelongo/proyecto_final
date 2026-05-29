@@ -133,11 +133,13 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva'),
-      ),
+      floatingActionButton: AppRoutes.solicitudesEnabled
+          ? FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva'),
+            )
+          : null,
       body: Column(
         children: [
           ValueListenableBuilder<DateTime?>(

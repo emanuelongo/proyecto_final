@@ -62,7 +62,7 @@ class Insumo {
       status: status,
       lowStockThreshold: intFromValue(map['lowStockThreshold']),
       createdAt: dateFromValue(map['createdAt']),
-      updatedAt: dateFromValue(map['updatedAt']),
+      updatedAt: dateFromValue(map['updatedAt']) ?? dateFromValue(map['updateAt']),
       syncStatus: syncStatus,
     );
   }

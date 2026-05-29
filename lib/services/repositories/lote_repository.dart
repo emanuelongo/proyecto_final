@@ -19,6 +19,16 @@ class LoteRepository {
     return _dao.watchByInsumo(insumoId).map((rows) => rows.map(loteFromDb).toList());
   }
 
+  Stream<List<Lote>> watchRemoteByInsumo(String insumoId) {
+    return _collection.where('insumoId', isEqualTo: insumoId).snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['id'] = data['id'] ?? doc.id;
+        return Lote.fromMap(data);
+      }).toList();
+    });
+  }
+
   Future<List<Lote>> getByInsumo(String insumoId) {
     return _dao.getByInsumo(insumoId).then((rows) => rows.map(loteFromDb).toList());
   }
