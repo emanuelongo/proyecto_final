@@ -377,10 +377,14 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
         );
       }
       await ServiceRegistry.syncService.syncAll();
-    } catch (e) {
+      // Recargar los nombres de insumos después de sincronizar
+      await _loadInsumos();
+    } catch (e, stackTrace) {
+      print('Error al procesar solicitud: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
-          _syncError = e is StateError ? e.message : 'No se pudo actualizar la solicitud.';
+          _syncError = e is StateError ? e.message : 'No se pudo actualizar la solicitud: $e';
         });
       }
     }

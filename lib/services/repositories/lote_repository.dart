@@ -49,13 +49,18 @@ class LoteRepository {
   }
 
   Future<void> pushPending() async {
+    print('=== LoteRepository.pushPending ===');
     final pending = await _dao.getPendingSync();
+    print('Lotes pendientes para sincronizar: ${pending.length}');
     for (final row in pending) {
       final model = loteFromDb(row);
+      print('Sincronizando lote: ${model.id}');
       try {
         await _collection.doc(model.id).set(model.toMap());
+        print('Lote ${model.id} sincronizado exitosamente');
         await _dao.upsert(loteToDb(model.copyWith(syncStatus: SyncStatus.synced)));
-      } catch (_) {
+      } catch (e) {
+        print('Error al sincronizar lote ${model.id}: $e');
         await _dao.upsert(loteToDb(model.copyWith(syncStatus: SyncStatus.failedSync)));
       }
     }

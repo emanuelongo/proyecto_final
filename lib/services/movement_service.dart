@@ -69,17 +69,24 @@ class MovementService {
     required int quantity,
     required String userId,
   }) async {
+    print('=== MovementService.registerOutbound ===');
+    print('Insumo: ${insumo.name} (${insumo.id}), quantity: $quantity, current total: ${insumo.totalQuantity}');
+
     final lotes = await _loteRepository.getByInsumo(insumo.id);
-    final availableQty = lotes
-        .where((lote) => !_rulesService.isLoteExpired(lote) && lote.quantity > 0)
-      .fold<int>(0, (sum, lote) => sum + lote.quantity.toInt());
+    print('Lotes encontrados: ${lotes.length}');
+
+    final availableLotes = lotes.where((lote) => !_rulesService.isLoteExpired(lote) && lote.quantity > 0).toList();
+    print('Lotes disponibles (no expirados y >0): ${availableLotes.length}');
+
+    final availableQty = availableLotes.fold<int>(0, (sum, lote) => sum + lote.quantity.toInt());
+    print('Cantidad disponible: $availableQty');
 
     if (!_rulesService.validateStock(availableQty, quantity)) {
-      throw StateError('Stock insuficiente en lotes vigentes.');
+      throw StateError('Stock insuficiente en lotes vigentes. Disponible: $availableQty, solicitado: $quantity');
     }
 
     var remaining = quantity;
-    final sorted = List<Lote>.from(lotes)
+    final sorted = List<Lote>.from(availableLotes)
       ..sort((a, b) {
         final aDate = a.expirationDate;
         final bDate = b.expirationDate;
@@ -89,15 +96,18 @@ class MovementService {
         return aDate.compareTo(bDate);
       });
 
+    print('Lotes ordenados para usar: ${sorted.length}');
+
     for (final lote in sorted) {
       if (remaining <= 0) {
         break;
       }
-      if (_rulesService.isLoteExpired(lote) || lote.quantity <= 0) {
-        continue;
-      }
+      print('Procesando lote: ${lote.id}, cantidad: ${lote.quantity}');
+
       final used = remaining > lote.quantity ? lote.quantity : remaining;
       remaining -= used;
+
+      print('Usando $used de lote ${lote.id}, remaining: $remaining');
 
       final updatedLote = lote.copyWith(
         quantity: lote.quantity - used,
@@ -105,6 +115,7 @@ class MovementService {
         syncStatus: SyncStatus.pendingSync,
       );
       await _loteRepository.upsertLocal(updatedLote, markPending: true);
+      print('Lote actualizado: ${lote.id}, nueva cantidad: ${updatedLote.quantity}');
 
       final movimiento = Movimiento(
         id: '${DateTime.now().millisecondsSinceEpoch}-${lote.id}',
@@ -117,6 +128,7 @@ class MovementService {
         syncStatus: SyncStatus.pendingSync,
       );
       await _movimientoRepository.upsertLocal(movimiento, markPending: true);
+      print('Movimiento registrado: ${movimiento.id}');
     }
 
     final updatedInsumo = insumo.copyWith(
@@ -125,5 +137,6 @@ class MovementService {
       syncStatus: SyncStatus.pendingSync,
     );
     await _insumoRepository.upsertLocal(updatedInsumo, markPending: true);
+    print('Insumo actualizado: ${insumo.name}, nuevo total: ${updatedInsumo.totalQuantity}');
   }
 }

@@ -71,13 +71,18 @@ class InsumoRepository {
   }
 
   Future<void> pushPending() async {
+    print('=== InsumoRepository.pushPending ===');
     final pending = await _dao.getPendingSync();
+    print('Insumos pendientes para sincronizar: ${pending.length}');
     for (final row in pending) {
       final model = insumoFromDb(row);
+      print('Sincronizando insumo: ${model.id}, totalQuantity: ${model.totalQuantity}');
       try {
         await _collection.doc(model.id).set(model.toMap());
+        print('Insumo ${model.id} sincronizado exitosamente');
         await _dao.upsert(insumoToDb(model.copyWith(syncStatus: SyncStatus.synced)));
-      } catch (_) {
+      } catch (e) {
+        print('Error al sincronizar insumo ${model.id}: $e');
         await _dao.upsert(insumoToDb(model.copyWith(syncStatus: SyncStatus.failedSync)));
       }
     }
