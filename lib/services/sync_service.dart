@@ -30,9 +30,9 @@ class SyncService {
   Future<void> syncAll({int maxRetries = 3}) async {
     var attempt = 0;
     while (true) {
-      final pullErrors = await _pullAll();
       final pushErrors = await _pushAll();
-      final errors = [...pullErrors, ...pushErrors];
+      final pullErrors = await _pullAll();
+      final errors = [...pushErrors, ...pullErrors];
 
       if (errors.isEmpty) {
         _syncState.markSuccess();
