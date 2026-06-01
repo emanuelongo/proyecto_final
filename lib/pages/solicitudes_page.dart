@@ -30,9 +30,9 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
   UserProfile? _profile;
   String? _userId;
   bool _loadingProfile = true;
+  Map<String, String> _insumoNames = {};
 
   static const Color primaryPurple = Color(0xFF8F5DFA);
-  static const Color accentGreen = Color(0xFFB0FA5D);
 
   @override
   void initState() {
@@ -54,12 +54,26 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
     }
 
     final profile = await _profileService.fetchProfile(user.uid);
+    await _loadInsumos();
     if (!mounted) return;
     setState(() {
       _profile = profile;
       _userId = user.uid;
       _loadingProfile = false;
     });
+  }
+
+  Future<void> _loadInsumos() async {
+    final insumos = await ServiceRegistry.insumos.getAll();
+    final names = <String, String>{};
+    for (final insumo in insumos) {
+      names[insumo.id] = insumo.name;
+    }
+    if (mounted) {
+      setState(() {
+        _insumoNames = names;
+      });
+    }
   }
 
   Future<void> _sync() async {
@@ -153,6 +167,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
       body: SafeArea(
         child: Column(
           children: [
+            // CONTENEDOR MORADO (Diseño de tu compañero con corrección de borderRadius)
             Padding(
               padding: const EdgeInsets.all(16),
               child: Container(
@@ -167,7 +182,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                       Color(0xFF7B4FE0),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20), // Corrección aplicada aquí adentro
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,6 +230,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                   TextButton(onPressed: _sync, child: const Text('Reintentar')),
                 ],
               ),
+            // LISTADO DE DATOS (Tu lógica de persistencia y backend conectada)
             Expanded(
               child: StreamBuilder<List<Solicitud>>(
                 stream: stream,
@@ -236,10 +252,17 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                     padding: const EdgeInsets.all(12),
                     itemBuilder: (context, index) {
                       final item = items[index];
+                      final insumoName = _insumoNames[item.insumoId] ?? 'Insumo desconocido';
                       return Card(
                         child: ListTile(
-                          title: Text('Solicitud ${item.id}'),
-                          subtitle: Text('Cantidad: ${item.quantity}'),
+                          title: Text(insumoName),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Cantidad: ${item.quantity}'),
+                              Text('Solicitud: ${item.id}'),
+                            ],
+                          ),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -273,6 +296,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     _ReviewAction? selectedAction;
+    final insumoName = _insumoNames[solicitud.insumoId] ?? 'Insumo desconocido';
 
     final result = await showDialog<_ReviewAction>(
       context: context,
@@ -286,7 +310,10 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                   key: formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text('Insumo: $insumoName'),
+                      const SizedBox(height: 8),
                       Text('Cantidad solicitada: ${solicitud.quantity}'),
                       const SizedBox(height: 12),
                       TextFormField(

@@ -44,6 +44,11 @@ class InsumoRepository {
     return insumoFromDb(row);
   }
 
+  Future<List<Insumo>> getAll() async {
+    final rows = await _dao.getAll();
+    return rows.map(insumoFromDb).toList();
+  }
+
   Future<void> upsertLocal(Insumo insumo, {bool markPending = false}) async {
     final value = markPending ? insumo.copyWith(syncStatus: SyncStatus.pendingSync) : insumo;
     await _dao.upsert(insumoToDb(value));

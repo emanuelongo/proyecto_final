@@ -28,4 +28,8 @@ class InsumoDao {
   Future<List<db.Insumo>> getPendingSync() {
     return (_db.select(_db.insumos)..where((tbl) => tbl.syncStatus.equals('pendingSync'))).get();
   }
+
+  Future<List<db.Insumo>> getAll() {
+    return _db.select(_db.insumos).get();
+  }
 }
