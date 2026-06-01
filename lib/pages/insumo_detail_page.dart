@@ -16,6 +16,9 @@ class InsumoDetailPage extends StatelessWidget {
 
   final Insumo insumo;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   Widget build(BuildContext context) {
     final lotesStream = ServiceRegistry.lotes.watchRemoteByInsumo(insumo.id);
@@ -24,8 +27,15 @@ class InsumoDetailPage extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
-          title: Text(insumo.name),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.black87,
+          title: Text(
+            insumo.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           actions: [
             IconButton(
               onPressed: () {
@@ -45,64 +55,98 @@ class InsumoDetailPage extends StatelessWidget {
             ],
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Unidad: ${insumo.unit}'),
-              const SizedBox(height: 8),
-              Text('Cantidad total: ${insumo.totalQuantity}'),
-              const SizedBox(height: 8),
-              SyncStatusChip(status: insumo.syncStatus),
-              const SizedBox(height: 16),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    StreamBuilder<List<Lote>>(
-                      stream: lotesStream,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const LoadingState();
-                        }
-                        final lotes = snapshot.data ?? [];
-                        if (lotes.isEmpty) {
-                          return const EmptyState(message: 'No hay lotes registrados.');
-                        }
-                        return ListView.separated(
-                          itemCount: lotes.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final lote = lotes[index];
-                            return _LoteCard(lote: lote, unit: insumo.unit);
-                          },
-                        );
-                      },
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        primaryPurple,
+                        Color(0xFF7B4FE0),
+                      ],
                     ),
-                    StreamBuilder<List<Movimiento>>(
-                      stream: movimientosStream,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const LoadingState();
-                        }
-                        final movimientos = snapshot.data ?? [];
-                        if (movimientos.isEmpty) {
-                          return const EmptyState(message: 'No hay movimientos registrados.');
-                        }
-                        return ListView.separated(
-                          itemCount: movimientos.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final movimiento = movimientos[index];
-                            return _MovimientoCard(movimiento: movimiento);
-                          },
-                        );
-                      },
-                    ),
-                  ],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        insumo.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Unidad: ${insumo.unit} · Cantidad: ${insumo.totalQuantity}',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 8),
+                      SyncStatusChip(status: insumo.syncStatus),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 16),
+
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      StreamBuilder<List<Lote>>(
+                        stream: lotesStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const LoadingState();
+                          }
+                          final lotes = snapshot.data ?? [];
+                          if (lotes.isEmpty) {
+                            return const EmptyState(message: 'No hay lotes registrados.');
+                          }
+                          return ListView.separated(
+                            itemCount: lotes.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final lote = lotes[index];
+                              return _LoteCard(lote: lote, unit: insumo.unit);
+                            },
+                          );
+                        },
+                      ),
+                      StreamBuilder<List<Movimiento>>(
+                        stream: movimientosStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const LoadingState();
+                          }
+                          final movimientos = snapshot.data ?? [];
+                          if (movimientos.isEmpty) {
+                            return const EmptyState(message: 'No hay movimientos registrados.');
+                          }
+                          return ListView.separated(
+                            itemCount: movimientos.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final movimiento = movimientos[index];
+                              return _MovimientoCard(movimiento: movimiento);
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -10,13 +10,22 @@ import '../widgets/sync_status_chip.dart';
 class MovementsHistoryPage extends StatelessWidget {
   const MovementsHistoryPage({super.key});
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+
   @override
   Widget build(BuildContext context) {
     final stream = ServiceRegistry.movimientos.watchLocal();
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Historial de movimientos'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Historial de movimientos',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: SafeArea(
         child: StreamBuilder<List<Movimiento>>(
@@ -29,14 +38,57 @@ class MovementsHistoryPage extends StatelessWidget {
             if (movimientos.isEmpty) {
               return const EmptyState(message: 'No hay movimientos registrados.');
             }
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: movimientos.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final movimiento = movimientos[index];
-                return _MovimientoCard(movimiento: movimiento);
-              },
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          primaryPurple,
+                          Color(0xFF7B4FE0),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Movimientos',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Registrados: ${movimientos.length}',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: movimientos.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final movimiento = movimientos[index];
+                      return _MovimientoCard(movimiento: movimiento);
+                    },
+                  ),
+                ),
+              ],
             );
           },
         ),

@@ -28,6 +28,9 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
   bool _submitting = false;
   String? _error;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   void dispose() {
     _quantityController.dispose();
@@ -115,8 +118,12 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
     final stream = ServiceRegistry.insumos.watchLocal();
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Nueva solicitud'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text('Nueva solicitud', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: StreamBuilder<List<Insumo>>(
         stream: stream,
@@ -150,14 +157,25 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'Completa la solicitud',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Verifica el stock disponible antes de enviar.',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [primaryPurple, Color(0xFF7B4FE0)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Completa la solicitud', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+                                  const SizedBox(height: 6),
+                                  const Text('Verifica el stock disponible antes de enviar.', style: TextStyle(color: Colors.white70)),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 16),
                             
@@ -206,11 +224,15 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
                             
                             // Un Spacer flexible para empujar el botón al fondo si hay espacio libre, 
                             // pero que se encoge a cero si el teclado se levanta.
-                            const Spacer(),
-                            const SizedBox(height: 16),
+                            //const Spacer(),
+                            //const SizedBox(height: 16),
                             
                             FilledButton(
                               onPressed: _submitting ? null : () => _submit(insumos),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: accentGreen,
+                                foregroundColor: Colors.black87,
+                              ),
                               child: _submitting
                                   ? const SizedBox(
                                       height: 20,

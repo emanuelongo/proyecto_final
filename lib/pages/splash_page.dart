@@ -19,6 +19,8 @@ class _SplashPageState extends State<SplashPage> {
   bool _loading = true;
   String? _error;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+
   @override
   void initState() {
     super.initState();
@@ -97,13 +99,39 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: Center(
         child: _loading
-            ? const CircularProgressIndicator()
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: CircularProgressIndicator(),
+                  ),
+                  SizedBox(height: 12),
+                  Text('Cargando...'),
+                ],
+              )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_error ?? 'Error desconocido'),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [primaryPurple, Color(0xFF7B4FE0)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _error ?? 'Error desconocido',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: _bootstrap,

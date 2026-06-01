@@ -17,6 +17,9 @@ class MovementPage extends StatefulWidget {
 }
 
 class _MovementPageState extends State<MovementPage> {
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController();
   final AuthService _authService = AuthService();
@@ -102,8 +105,15 @@ class _MovementPageState extends State<MovementPage> {
     final insumo = widget.insumo;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Registrar movimiento'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Registrar movimiento',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -113,16 +123,47 @@ class _MovementPageState extends State<MovementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Insumo: ${insumo.name}',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        primaryPurple,
+                        Color(0xFF7B4FE0),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Insumo: ${insumo.name}',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Registra entradas o salidas con control de lotes.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 12),
+                      Chip(
+                        label: Text(
+                          _type == MovementType.inbound ? 'Entrada' : 'Salida',
+                          style: const TextStyle(color: Colors.black87),
+                        ),
+                        backgroundColor: accentGreen,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Registra entradas o salidas con control de lotes.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
                 DropdownButtonFormField<MovementType>(
                   value: _type,
                   items: const [
@@ -145,7 +186,7 @@ class _MovementPageState extends State<MovementPage> {
                   },
                   decoration: const InputDecoration(labelText: 'Tipo de movimiento'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _quantityController,
                   keyboardType: TextInputType.number,
@@ -160,7 +201,7 @@ class _MovementPageState extends State<MovementPage> {
                   },
                   onFieldSubmitted: (_) => _submit(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 if (_type == MovementType.inbound)
                   OutlinedButton.icon(
                     onPressed: _pickDate,
@@ -181,6 +222,10 @@ class _MovementPageState extends State<MovementPage> {
                 ],
                 FilledButton(
                   onPressed: _submitting ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accentGreen,
+                    foregroundColor: Colors.black87,
+                  ),
                   child: _submitting
                       ? const SizedBox(
                           height: 20,

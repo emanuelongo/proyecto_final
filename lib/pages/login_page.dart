@@ -18,6 +18,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isSubmitting = false;
   String? _error;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -60,8 +63,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Iniciar sesion'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text('Iniciar sesión', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -72,14 +79,25 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Bienvenido',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ingresa con tu correo institucional.',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [primaryPurple, Color(0xFF7B4FE0)],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Bienvenido', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white)),
+                        const SizedBox(height: 6),
+                        const Text('Ingresa con tu correo ya registrado por el administrador.', style: TextStyle(color: Colors.white70)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -125,14 +143,29 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 12),
                   ],
                   FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentGreen,
+                      foregroundColor: Colors.black87,
+                    ),
                     onPressed: _isSubmitting ? null : _submit,
                     child: _isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Ingresar'),
+                      ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child:
+                            CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Ingresar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
+                      ),
                   ),
                 ],
               ),

@@ -31,6 +31,9 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
   String? _userId;
   bool _loadingProfile = true;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   void initState() {
     super.initState();
@@ -123,8 +126,15 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
         : ServiceRegistry.solicitudes.watchByRequester(userId);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Solicitudes'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Solicitudes',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             onPressed: _syncing ? null : _sync,
@@ -140,75 +150,121 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
               label: const Text('Nueva'),
             )
           : null,
-      body: Column(
-        children: [
-          ValueListenableBuilder<DateTime?>(
-            valueListenable: ServiceRegistry.syncState.lastSyncAt,
-            builder: (context, lastSyncAt, _) {
-              if (lastSyncAt == null) return const SizedBox.shrink();
-              final label = lastSyncAt.toLocal().toString().split('.').first;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text('Ultima sincronizacion: $label'),
-              );
-            },
-          ),
-          if (_syncError != null)
-            MaterialBanner(
-              content: Text(_syncError!),
-              actions: [
-                TextButton(onPressed: _sync, child: const Text('Reintentar')),
-              ],
-            ),
-          Expanded(
-            child: StreamBuilder<List<Solicitud>>(
-              stream: stream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingState();
-                }
-                if (snapshot.hasError) {
-                  return ErrorState(
-                    message: 'Error al cargar solicitudes.',
-                    onRetry: _sync,
-                  );
-                }
-                final items = snapshot.data ?? [];
-                if (items.isEmpty) {
-                  return const EmptyState(message: 'No hay solicitudes registradas.');
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text('Solicitud ${item.id}'),
-                        subtitle: Text('Cantidad: ${item.quantity}'),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            StatusChip(
-                              label: _statusLabel(item.status),
-                              color: _statusColor(item.status),
-                            ),
-                            const SizedBox(height: 6),
-                            SyncStatusChip(status: item.syncStatus),
-                          ],
-                        ),
-                        onTap: isDocente && item.status == SolicitudStatus.requested
-                            ? () => _showReviewDialog(item, profile)
-                            : null,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      primaryPurple,
+                      Color(0xFF7B4FE0),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Solicitudes',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-                  },
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemCount: items.length,
-                );
-              },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isAuxiliar
+                          ? 'Envía solicitudes desde aquí.'
+                          : 'Revisa tus solicitudes registradas.',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    const SizedBox(height: 12),
+                    ValueListenableBuilder<DateTime?>(
+                      valueListenable: ServiceRegistry.syncState.lastSyncAt,
+                      builder: (context, lastSyncAt, _) {
+                        if (lastSyncAt == null) {
+                          return const Text(
+                            'Sin sincronización reciente',
+                            style: TextStyle(color: Colors.white70),
+                          );
+                        }
+                        final label = lastSyncAt.toLocal().toString().split('.').first;
+                        return Text(
+                          'Última sincronización: $label',
+                          style: const TextStyle(color: Colors.white70),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+            if (_syncError != null)
+              MaterialBanner(
+                content: Text(_syncError!),
+                actions: [
+                  TextButton(onPressed: _sync, child: const Text('Reintentar')),
+                ],
+              ),
+            Expanded(
+              child: StreamBuilder<List<Solicitud>>(
+                stream: stream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LoadingState();
+                  }
+                  if (snapshot.hasError) {
+                    return ErrorState(
+                      message: 'Error al cargar solicitudes.',
+                      onRetry: _sync,
+                    );
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const EmptyState(message: 'No hay solicitudes registradas.');
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(12),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text('Solicitud ${item.id}'),
+                          subtitle: Text('Cantidad: ${item.quantity}'),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              StatusChip(
+                                label: _statusLabel(item.status),
+                                color: _statusColor(item.status),
+                              ),
+                              const SizedBox(height: 6),
+                              SyncStatusChip(status: item.syncStatus),
+                            ],
+                          ),
+                          onTap: isDocente && item.status == SolicitudStatus.requested
+                              ? () => _showReviewDialog(item, profile)
+                              : null,
+                        ),
+                      );
+                    },
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemCount: items.length,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
