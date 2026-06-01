@@ -178,7 +178,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                   return const EmptyState(message: 'No hay solicitudes registradas.');
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return Card(
