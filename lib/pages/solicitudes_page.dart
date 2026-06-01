@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import '../app_routes.dart';
 import '../models/user_profile.dart';
 import '../models/solicitud.dart';
-import '../models/enums.dart';
+import '../models/enums.dart'; // Aquí están tus enums como UserRole y SolicitudStatus
 import '../services/auth_service.dart';
-import '../services/permission_service.dart';
+import '../services/user_profile_service.dart'; // Importación recuperada
 import '../services/service_registry.dart';
-import '../services/user_profile_service.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/loading_state.dart';
@@ -21,10 +20,11 @@ class SolicitudesPage extends StatefulWidget {
   State<SolicitudesPage> createState() => _SolicitudesPageState();
 }
 
+class _CreateSolicitudPageState {} // Evita conflictos si existía una referencia fantasma
+
 class _SolicitudesPageState extends State<SolicitudesPage> {
   final AuthService _authService = AuthService();
-  final UserProfileService _profileService = UserProfileService();
-  final PermissionService _permissionService = const PermissionService();
+  final UserProfileService _profileService = UserProfileService(); // Restaurado de tu código base
   bool _syncing = false;
   String? _syncError;
   UserProfile? _profile;
@@ -43,9 +43,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
     if (user == null) {
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) {
-            return;
-          }
+          if (!mounted) return;
           Navigator.of(context).pushReplacementNamed(AppRoutes.login);
         });
       }
@@ -53,9 +51,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
     }
 
     final profile = await _profileService.fetchProfile(user.uid);
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     setState(() {
       _profile = profile;
       _userId = user.uid;
@@ -117,8 +113,12 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
       );
     }
 
-    final canApprove = _permissionService.canApproveSolicitud(profile);
-    final stream = canApprove
+    final isDocente = profile.role == UserRole.docente;
+    final isAuxiliar = profile.role == UserRole.auxiliar;
+    final isAdmin = profile.role == UserRole.admin;
+    final isDocenteOrAdmin = isDocente || isAdmin;
+
+    final stream = isDocenteOrAdmin
         ? ServiceRegistry.solicitudes.watchLocal()
         : ServiceRegistry.solicitudes.watchByRequester(userId);
 
@@ -133,7 +133,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
           ),
         ],
       ),
-      floatingActionButton: AppRoutes.solicitudesEnabled
+      floatingActionButton: isAuxiliar
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),
               icon: const Icon(Icons.add),
@@ -145,9 +145,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
           ValueListenableBuilder<DateTime?>(
             valueListenable: ServiceRegistry.syncState.lastSyncAt,
             builder: (context, lastSyncAt, _) {
-              if (lastSyncAt == null) {
-                return const SizedBox.shrink();
-              }
+              if (lastSyncAt == null) return const SizedBox.shrink();
               final label = lastSyncAt.toLocal().toString().split('.').first;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -180,7 +178,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                   return const EmptyState(message: 'No hay solicitudes registradas.');
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return Card(
@@ -198,7 +196,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                             SyncStatusChip(status: item.syncStatus),
                           ],
                         ),
-                        onTap: canApprove && item.status == SolicitudStatus.requested
+                        onTap: isDocente && item.status == SolicitudStatus.requested
                             ? () => _showReviewDialog(item, profile)
                             : null,
                       ),
@@ -217,41 +215,65 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
 
   Future<void> _showReviewDialog(Solicitud solicitud, UserProfile profile) async {
     final reasonController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    _ReviewAction? selectedAction;
+
     final result = await showDialog<_ReviewAction>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Revision de solicitud'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Cantidad solicitada: ${solicitud.quantity}'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Motivo de rechazo (si aplica)',
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Revision de solicitud'),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Cantidad solicitada: ${solicitud.quantity}'),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: reasonController,
+                        decoration: const InputDecoration(
+                          labelText: 'Motivo de rechazo',
+                        ),
+                        validator: (value) {
+                          if (selectedAction == _ReviewAction.reject && (value == null || value.trim().isEmpty)) {
+                            return 'El motivo de rechazo es obligatorio.';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(_ReviewAction.reject),
-              child: const Text('Rechazar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(_ReviewAction.approve),
-              child: const Text('Aprobar'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    selectedAction = _ReviewAction.reject;
+                    if (formKey.currentState!.validate()) {
+                      Navigator.of(context).pop(_ReviewAction.reject);
+                    }
+                  },
+                  child: const Text('Rechazar'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    selectedAction = _ReviewAction.approve;
+                    Navigator.of(context).pop(_ReviewAction.approve);
+                  },
+                  child: const Text('Aprobar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
-    if (result == null) {
-      return;
-    }
+    if (result == null) return;
 
     try {
       if (result == _ReviewAction.approve) {
@@ -272,10 +294,10 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
         );
       }
       await ServiceRegistry.syncService.syncAll();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _syncError = 'No se pudo actualizar la solicitud.';
+          _syncError = e is StateError ? e.message : 'No se pudo actualizar la solicitud.';
         });
       }
     }

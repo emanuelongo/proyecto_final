@@ -25,7 +25,7 @@ Responsabilidades:
 | Correo | Contrasena | Rol | Estado | Valida |
 | --- | --- | --- | --- | --- |
 | auxiliar@test.com | 123456 | auxiliar | active | Creacion de solicitudes y movimientos. |
-| docente@test.com | 123456 | docente | active | Aprobacion y rechazo. |
+| docente@test.com | 123456 | docente | active | Aprobacion y rechazo. |docen
 | admin@test.com | 123456 | admin | active | Gestion de usuarios e inventario. |
 | bloqueado@test.com | 123456 | auxiliar | blocked | Acceso restringido. |
 

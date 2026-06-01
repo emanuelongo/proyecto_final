@@ -21,7 +21,10 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
   final _quantityController = TextEditingController();
   final RulesService _rulesService = const RulesService();
   final AuthService _authService = AuthService();
-  Insumo? _selected;
+  
+  // CORRECCIÓN ANTERIOR: Mantenemos el ID como un String plano
+  String? _selectedInsumoId; 
+  
   bool _submitting = false;
   String? _error;
 
@@ -31,7 +34,7 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(List<Insumo> insumos) async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -42,15 +45,17 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
       return;
     }
 
-    final selected = _selected;
-    if (selected == null) {
+    final selectedId = _selectedInsumoId;
+    if (selectedId == null) {
       setState(() {
         _error = 'Selecciona un insumo.';
       });
       return;
     }
 
-    final lotes = await ServiceRegistry.lotes.getByInsumo(selected.id);
+    final selectedInsumo = insumos.firstWhere((insumo) => insumo.id == selectedId);
+
+    final lotes = await ServiceRegistry.lotes.getByInsumo(selectedInsumo.id);
     final hasValidLote = lotes.any((lote) => !_rulesService.isLoteExpired(lote) && lote.quantity > 0);
     if (!hasValidLote) {
       setState(() {
@@ -60,7 +65,7 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
     }
 
     final qty = int.tryParse(_quantityController.text.trim()) ?? 0;
-    if (!_rulesService.validateStock(selected.totalQuantity, qty)) {
+    if (!_rulesService.validateStock(selectedInsumo.totalQuantity, qty)) {
       setState(() {
         _error = 'Cantidad no disponible en inventario.';
       });
@@ -74,7 +79,7 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
 
     final solicitud = Solicitud(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      insumoId: selected.id,
+      insumoId: selectedInsumo.id,
       requestedBy: user.uid,
       quantity: qty,
       status: SolicitudStatus.requested,
@@ -127,78 +132,100 @@ class _CreateSolicitudPageState extends State<CreateSolicitudPage> {
           }
 
           return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Completa la solicitud',
-                      style: Theme.of(context).textTheme.titleMedium,
+            // NUEVA CORRECCIÓN: LayoutBuilder nos da las restricciones exactas de altura libre en pantalla
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  // Forzamos a que el scroll sea responsivo ante el teclado físico y en pantalla
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      // El alto mínimo se adapta dinámicamente restando el espacio que ocupe el teclado
+                      minHeight: constraints.maxHeight,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Verifica el stock disponible antes de enviar.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<Insumo>(
-                      value: _selected,
-                      items: insumos
-                          .map(
-                            (insumo) => DropdownMenuItem(
-                              value: insumo,
-                              child:
-                                  Text('${insumo.name} (${insumo.totalQuantity} ${insumo.unit})'),
+                    child: IntrinsicHeight(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Completa la solicitud',
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selected = value;
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: 'Insumo'),
-                      validator: (value) => value == null ? 'Selecciona un insumo.' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(labelText: 'Cantidad'),
-                      validator: (value) {
-                        final parsed = int.tryParse(value ?? '');
-                        if (parsed == null || parsed <= 0) {
-                          return 'Cantidad invalida.';
-                        }
-                        return null;
-                      },
-                      onFieldSubmitted: (_) => _submit(),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_error != null) ...[
-                      Text(
-                        _error!,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Verifica el stock disponible antes de enviar.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            DropdownButtonFormField<String>(
+                              value: _selectedInsumoId,
+                              items: insumos
+                                  .map(
+                                    (insumo) => DropdownMenuItem<String>(
+                                      value: insumo.id,
+                                      child: Text('${insumo.name} (${insumo.totalQuantity} ${insumo.unit})'),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedInsumoId = value;
+                                });
+                              },
+                              decoration: const InputDecoration(labelText: 'Insumo'),
+                              validator: (value) => value == null ? 'Selecciona un insumo.' : null,
+                            ),
+                            
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _quantityController,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.done,
+                              decoration: const InputDecoration(labelText: 'Cantidad'),
+                              validator: (value) {
+                                final parsed = int.tryParse(value ?? '');
+                                if (parsed == null || parsed <= 0) {
+                                  return 'Cantidad invalida.';
+                                }
+                                return null;
+                              },
+                              onFieldSubmitted: (_) => _submit(insumos),
+                            ),
+                            const SizedBox(height: 16),
+                            if (_error != null) ...[
+                              Text(
+                                _error!,
+                                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            
+                            // Un Spacer flexible para empujar el botón al fondo si hay espacio libre, 
+                            // pero que se encoge a cero si el teclado se levanta.
+                            const Spacer(),
+                            const SizedBox(height: 16),
+                            
+                            FilledButton(
+                              onPressed: _submitting ? null : () => _submit(insumos),
+                              child: _submitting
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Text('Enviar solicitud'),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                    FilledButton(
-                      onPressed: _submitting ? null : _submit,
-                      child: _submitting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Enviar solicitud'),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
           );
         },

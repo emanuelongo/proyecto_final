@@ -11,6 +11,7 @@ import 'pages/splash_page.dart';
 import 'pages/create_solicitud_page.dart';
 import 'pages/insumo_detail_page.dart';
 import 'pages/movement_page.dart';
+import 'pages/movements_history_page.dart';
 import 'pages/users_page.dart';
 import 'pages/reports_page.dart';
 
@@ -36,6 +37,7 @@ class App extends StatelessWidget {
         AppRoutes.inventory: (context) => const InventoryPage(),
         AppRoutes.solicitudes: (context) => const SolicitudesPage(),
         AppRoutes.createSolicitud: (context) => const CreateSolicitudPage(),
+        AppRoutes.movementsHistory: (context) => const MovementsHistoryPage(),
         AppRoutes.users: (context) => const UsersPage(),
         AppRoutes.reports: (context) => const ReportsPage(),
       },

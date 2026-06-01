@@ -22,11 +22,6 @@ class _HomePageState extends State<HomePage> {
   UserProfile? _profile;
   bool _loading = true;
 
-  // 1. Convertimos los permisos en variables de estado
-  bool _canManageUsers = false;
-  bool _canManageInventory = false;
-  bool _canCreateSolicitud = false;
-
   @override
   void initState() {
     super.initState();
@@ -60,12 +55,8 @@ class _HomePageState extends State<HomePage> {
         break;
     }
 
-    // 2. Calculamos los permisos UNA SOLA VEZ aquí, junto con el perfil
     setState(() {
       _profile = profile;
-      _canManageUsers = _permissionService.canManageUsers(profile);
-      _canManageInventory = _permissionService.canManageInventory(profile);
-      _canCreateSolicitud = _permissionService.canCreateSolicitud(profile);
       _loading = false;
     });
   }
@@ -99,10 +90,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     final profile = _profile;
-    final canManageUsers = _canManageUsers;
-    final canManageInventory = _canManageInventory;
-    final canCreateSolicitud = _canCreateSolicitud;
-    
 
     if (profile == null) {
       return const Scaffold(
@@ -110,9 +97,11 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
-    //final canManageUsers = _permissionService.canManageUsers(profile);
-    //final canManageInventory = _permissionService.canManageInventory(profile);
-    //final canCreateSolicitud = _permissionService.canCreateSolicitud(profile);
+    final canManageUsers = _permissionService.canManageUsers(profile);
+    final canManageInventory = _permissionService.canManageInventory(profile);
+    final canViewSolicitudes = _permissionService.canViewSolicitudes(profile);
+    final canViewReports = _permissionService.canViewReports(profile);
+    final canViewMovements = _permissionService.canViewMovements(profile);
 
     return Scaffold(
       appBar: AppBar(
@@ -125,40 +114,48 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hola, ${profile.name}'),
-            const SizedBox(height: 8),
-            Text('Rol: ${profile.role.name}'),
-            const SizedBox(height: 16),
-            if (canManageInventory)
-              ListTile(
-                leading: const Icon(Icons.inventory),
-                title: const Text('Gestion de inventario'),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.inventory),
-              ),
-            if (canManageInventory)
-              ListTile(
-                leading: const Icon(Icons.bar_chart),
-                title: const Text('Reportes de inventario'),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
-              ),
-            if (AppRoutes.solicitudesEnabled && canCreateSolicitud)
-              ListTile(
-                leading: const Icon(Icons.assignment),
-                title: const Text('Solicitudes'),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.solicitudes),
-              ),
-            if (canManageUsers)
-              ListTile(
-                leading: const Icon(Icons.admin_panel_settings),
-                title: const Text('Administracion de usuarios'),
-                onTap: () => Navigator.of(context).pushNamed(AppRoutes.users),
-              ),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Hola, ${profile.name}'),
+              const SizedBox(height: 8),
+              Text('Rol: ${profile.role.name}'),
+              const SizedBox(height: 16),
+              if (canManageInventory)
+                ListTile(
+                  leading: const Icon(Icons.inventory),
+                  title: const Text('Gestion de inventario'),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.inventory),
+                ),
+              if (canViewMovements)
+                ListTile(
+                  leading: const Icon(Icons.swap_horiz),
+                  title: const Text('Movimientos'),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.movementsHistory),
+                ),
+              if (canViewReports)
+                ListTile(
+                  leading: const Icon(Icons.bar_chart),
+                  title: const Text('Reportes de inventario'),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
+                ),
+              if (canViewSolicitudes)
+                ListTile(
+                  leading: const Icon(Icons.assignment),
+                  title: const Text('Solicitudes'),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.solicitudes),
+                ),
+              if (canManageUsers)
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings),
+                  title: const Text('Administracion de usuarios'),
+                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.users),
+                ),
+            ],
+          ),
         ),
       ),
     );
