@@ -18,8 +18,14 @@ class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final UserProfileService _profileService = UserProfileService();
   final PermissionService _permissionService = const PermissionService();
+  
   UserProfile? _profile;
   bool _loading = true;
+
+  // 1. Convertimos los permisos en variables de estado
+  bool _canManageUsers = false;
+  bool _canManageInventory = false;
+  bool _canCreateSolicitud = false;
 
   @override
   void initState() {
@@ -54,8 +60,12 @@ class _HomePageState extends State<HomePage> {
         break;
     }
 
+    // 2. Calculamos los permisos UNA SOLA VEZ aquí, junto con el perfil
     setState(() {
       _profile = profile;
+      _canManageUsers = _permissionService.canManageUsers(profile);
+      _canManageInventory = _permissionService.canManageInventory(profile);
+      _canCreateSolicitud = _permissionService.canCreateSolicitud(profile);
       _loading = false;
     });
   }
@@ -89,15 +99,20 @@ class _HomePageState extends State<HomePage> {
     }
 
     final profile = _profile;
+    final canManageUsers = _canManageUsers;
+    final canManageInventory = _canManageInventory;
+    final canCreateSolicitud = _canCreateSolicitud;
+    
+
     if (profile == null) {
       return const Scaffold(
         body: Center(child: Text('Sin perfil activo.')),
       );
     }
 
-    final canManageUsers = _permissionService.canManageUsers(profile);
-    final canManageInventory = _permissionService.canManageInventory(profile);
-    final canCreateSolicitud = _permissionService.canCreateSolicitud(profile);
+    //final canManageUsers = _permissionService.canManageUsers(profile);
+    //final canManageInventory = _permissionService.canManageInventory(profile);
+    //final canCreateSolicitud = _permissionService.canCreateSolicitud(profile);
 
     return Scaffold(
       appBar: AppBar(
@@ -131,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Reportes de inventario'),
                 onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
               ),
-            if (canCreateSolicitud)
+            if (AppRoutes.solicitudesEnabled && canCreateSolicitud)
               ListTile(
                 leading: const Icon(Icons.assignment),
                 title: const Text('Solicitudes'),

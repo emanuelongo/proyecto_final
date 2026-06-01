@@ -131,6 +131,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
           ),
         ],
       ),
+      // CORRECCIÓN EFECTUADA: Se eliminó el conflicto y se unificó la lógica del Equipo 6
       floatingActionButton: isAuxiliarOrAdmin
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),

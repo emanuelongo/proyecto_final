@@ -18,7 +18,7 @@ class InsumoDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lotesStream = ServiceRegistry.lotes.watchLocalByInsumo(insumo.id);
+    final lotesStream = ServiceRegistry.lotes.watchRemoteByInsumo(insumo.id);
     final movimientosStream = ServiceRegistry.movimientos.watchLocalByInsumo(insumo.id);
 
     return DefaultTabController(
@@ -74,7 +74,7 @@ class InsumoDetailPage extends StatelessWidget {
                           separatorBuilder: (_, __) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final lote = lotes[index];
-                            return _LoteCard(lote: lote);
+                            return _LoteCard(lote: lote, unit: insumo.unit);
                           },
                         );
                       },
@@ -110,23 +110,119 @@ class InsumoDetailPage extends StatelessWidget {
   }
 }
 
+String _loteDisplayCode(String id) {
+  final normalized = id.trim();
+  final match = RegExp(r'^lote[_-]?(.*)$', caseSensitive: false).firstMatch(normalized);
+  if (match != null) {
+    final code = match.group(1)?.trim();
+    if (code != null && code.isNotEmpty) {
+      return code;
+    }
+  }
+  return normalized;
+}
+
+String _formatDate(DateTime date) {
+  final local = date.toLocal();
+  final day = local.day.toString().padLeft(2, '0');
+  final month = local.month.toString().padLeft(2, '0');
+  final year = local.year;
+  return '$day/$month/$year';
+}
+
 class _LoteCard extends StatelessWidget {
-  const _LoteCard({required this.lote});
+  const _LoteCard({required this.lote, required this.unit});
 
   final Lote lote;
+  final String unit;
 
   @override
   Widget build(BuildContext context) {
-    final expiration = lote.expirationDate;
-    final expirationLabel = expiration == null
-        ? 'Sin vencimiento'
-        : 'Vence: ${expiration.toLocal().toString().split(' ').first}';
+    final theme = Theme.of(context);
+    final code = _loteDisplayCode(lote.id);
+    final expiration = lote.expirationDate?.toLocal();
+    final now = DateTime.now();
+    final isExpired = expiration != null && expiration.isBefore(now);
+    final expiresSoon = expiration != null &&
+        !isExpired &&
+        expiration.isBefore(now.add(const Duration(days: 30)));
+
+    Color? expirationColor;
+    String expirationLabel;
+    IconData expirationIcon;
+
+    if (expiration == null) {
+      expirationColor = theme.colorScheme.outline;
+      expirationLabel = 'Sin fecha de vencimiento';
+      expirationIcon = Icons.event_busy_outlined;
+    } else if (isExpired) {
+      expirationColor = theme.colorScheme.error;
+      expirationLabel = 'Vencido el ${_formatDate(expiration)}';
+      expirationIcon = Icons.warning_amber_rounded;
+    } else if (expiresSoon) {
+      expirationColor = Colors.orange;
+      expirationLabel = 'Vence el ${_formatDate(expiration)}';
+      expirationIcon = Icons.schedule;
+    } else {
+      expirationColor = theme.colorScheme.primary;
+      expirationLabel = 'Vence el ${_formatDate(expiration)}';
+      expirationIcon = Icons.event_outlined;
+    }
 
     return Card(
-      child: ListTile(
-        title: Text('Lote ${lote.id}'),
-        subtitle: Text('Cantidad: ${lote.quantity}\n$expirationLabel'),
-        trailing: SyncStatusChip(status: lote.syncStatus),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Text(
+                code.length > 3 ? code.substring(0, 3) : code,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    code,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${lote.quantity} $unit',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(expirationIcon, size: 16, color: expirationColor),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          expirationLabel,
+                          style: theme.textTheme.bodySmall?.copyWith(color: expirationColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (lote.syncStatus != SyncStatus.synced) ...[
+                    const SizedBox(height: 8),
+                    SyncStatusChip(status: lote.syncStatus),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -47,11 +47,11 @@ class Lote {
 
     return Lote(
       id: (map['id'] ?? '').toString(),
-      insumoId: (map['insumoId'] ?? '').toString(),
+      insumoId: (map['insumoId'] ?? map['insumo_id'] ?? '').toString(),
       quantity: intFromValue(map['quantity']),
       expirationDate: dateFromValue(map['expirationDate']),
       createdAt: dateFromValue(map['createdAt']),
-      updatedAt: dateFromValue(map['updatedAt']),
+      updatedAt: dateFromValue(map['updatedAt']) ?? dateFromValue(map['updateAt']),
       syncStatus: syncStatus,
     );
   }

@@ -1,4 +1,7 @@
 class AppRoutes {
+  /// Desactivado hasta terminar el flujo de solicitudes.
+  static const solicitudesEnabled = false;
+
   static const splash = '/';
   static const login = '/login';
   static const pendingApproval = '/pending-approval';
