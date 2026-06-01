@@ -22,6 +22,9 @@ class _HomePageState extends State<HomePage> {
   UserProfile? _profile;
   bool _loading = true;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   void initState() {
     super.initState();
@@ -85,7 +88,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
 
@@ -93,7 +98,9 @@ class _HomePageState extends State<HomePage> {
 
     if (profile == null) {
       return const Scaffold(
-        body: Center(child: Text('Sin perfil activo.')),
+        body: Center(
+          child: Text('Sin perfil activo.'),
+        ),
       );
     }
 
@@ -104,13 +111,22 @@ class _HomePageState extends State<HomePage> {
     final canViewMovements = _permissionService.canViewMovements(profile);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Inventario Laboratorio'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'GoLab',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
             onPressed: _logout,
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesion',
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
@@ -120,40 +136,173 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hola, ${profile.name}'),
-              const SizedBox(height: 8),
-              Text('Rol: ${profile.role.name}'),
-              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      primaryPurple,
+                      Color(0xFF7B4FE0),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hola, ${profile.name}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accentGreen,
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        profile.role.name.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              const Text(
+                'Módulos',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
               if (canManageInventory)
-                ListTile(
-                  leading: const Icon(Icons.inventory),
-                  title: const Text('Gestion de inventario'),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.inventory),
+                _MenuCard(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Gestión de inventario',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.inventory),
                 ),
+
               if (canViewMovements)
-                ListTile(
-                  leading: const Icon(Icons.swap_horiz),
-                  title: const Text('Movimientos'),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.movementsHistory),
+                _MenuCard(
+                  icon: Icons.swap_horiz_rounded,
+                  title: 'Movimientos',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.movementsHistory),
                 ),
+
               if (canViewReports)
-                ListTile(
-                  leading: const Icon(Icons.bar_chart),
-                  title: const Text('Reportes de inventario'),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.reports),
+                _MenuCard(
+                  icon: Icons.bar_chart_rounded,
+                  title: 'Reportes',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.reports),
                 ),
+
               if (canViewSolicitudes)
-                ListTile(
-                  leading: const Icon(Icons.assignment),
-                  title: const Text('Solicitudes'),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.solicitudes),
+                _MenuCard(
+                  icon: Icons.assignment_outlined,
+                  title: 'Solicitudes',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.solicitudes),
                 ),
+
               if (canManageUsers)
-                ListTile(
-                  leading: const Icon(Icons.admin_panel_settings),
-                  title: const Text('Administracion de usuarios'),
-                  onTap: () => Navigator.of(context).pushNamed(AppRoutes.users),
+                _MenuCard(
+                  icon: Icons.admin_panel_settings_outlined,
+                  title: 'Administración de usuarios',
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.users),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: primaryPurple.withOpacity(.15),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryPurple.withOpacity(.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: primaryPurple,
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey,
+              ),
             ],
           ),
         ),

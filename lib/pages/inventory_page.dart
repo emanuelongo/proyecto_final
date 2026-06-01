@@ -30,6 +30,8 @@ class InsumoDetailArgs {
 class _InventoryPageState extends State<InventoryPage> {
   bool _syncing = false;
   String? _syncError;
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
 
   @override
   void initState() {
@@ -114,8 +116,15 @@ class _InventoryPageState extends State<InventoryPage> {
     final lastSyncNotifier = ServiceRegistry.syncState.lastSyncAt;
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Inventario'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Inventario',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           if (_syncing)
             const Padding(
@@ -134,106 +143,139 @@ class _InventoryPageState extends State<InventoryPage> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          ValueListenableBuilder<DateTime?>(
-            valueListenable: lastSyncNotifier,
-            builder: (context, lastSyncAt, _) {
-              if (lastSyncAt == null) {
-                return const SizedBox.shrink();
-              }
-              final label = lastSyncAt.toLocal().toString().split('.').first;
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Ultima copia local: $label',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              );
-            },
-          ),
-          if (_syncError != null)
+      body: SafeArea(
+        child: Column(
+          children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Material(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-                child: ListTile(
-                  dense: true,
-                  leading: Icon(
-                    Icons.info_outline,
-                    color: Theme.of(context).colorScheme.onErrorContainer,
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      primaryPurple,
+                      Color(0xFF7B4FE0),
+                    ],
                   ),
-                  title: Text(
-                    _syncError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                      fontSize: 13,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Inventario',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  trailing: TextButton(
-                    onPressed: () => _sync(),
-                    child: const Text('Reintentar'),
-                  ),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<DateTime?>(
+                      valueListenable: lastSyncNotifier,
+                      builder: (context, lastSyncAt, _) {
+                        if (lastSyncAt == null) {
+                          return const Text(
+                            'Sin copia local reciente',
+                            style: TextStyle(color: Colors.white70),
+                          );
+                        }
+                        final label = lastSyncAt.toLocal().toString().split('.').first;
+                        return Text(
+                          'Última copia local: $label',
+                          style: const TextStyle(color: Colors.white70),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
-          Expanded(
-            child: StreamBuilder<List<Insumo>>(
-              stream: stream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingState();
-                }
-                if (snapshot.hasError) {
-                  final error = snapshot.error;
-                  final message = error is FirebaseException
-                      ? _messageForFirestoreError(error)
-                      : 'Error al cargar inventario.';
-                  return ErrorState(
-                    message: message,
-                    onRetry: () => _sync(),
-                  );
-                }
-                final items = snapshot.data ?? [];
-                if (items.isEmpty) {
-                  return const EmptyState(message: 'No hay insumos registrados.');
-                }
-                return StreamBuilder<List<Alerta>>(
-                  stream: ServiceRegistry.alertas.watchLocal(),
-                  builder: (context, alertSnapshot) {
-                    final alertas = alertSnapshot.data ?? [];
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return AlertList(alertas: alertas);
-                        }
-                        final item = items[index - 1];
-                        return _InsumoCard(
-                          insumo: item,
-                          statusLabel: _inventoryLabel(item.status),
-                          statusColor: _inventoryColor(item.status),
-                          onTap: () {
-                            Navigator.of(context).pushNamed(
-                              AppRoutes.insumoDetail,
-                              arguments: InsumoDetailArgs(item),
-                            );
-                          },
-                        );
-                      },
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemCount: items.length + 1,
+
+            if (_syncError != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Material(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    title: Text(
+                      _syncError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontSize: 13,
+                      ),
+                    ),
+                    trailing: TextButton(
+                      onPressed: () => _sync(),
+                      child: const Text('Reintentar'),
+                    ),
+                  ),
+                ),
+              ),
+
+            Expanded(
+              child: StreamBuilder<List<Insumo>>(
+                stream: stream,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LoadingState();
+                  }
+                  if (snapshot.hasError) {
+                    final error = snapshot.error;
+                    final message = error is FirebaseException
+                        ? _messageForFirestoreError(error)
+                        : 'Error al cargar inventario.';
+                    return ErrorState(
+                      message: message,
+                      onRetry: () => _sync(),
                     );
-                  },
-                );
-              },
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const EmptyState(message: 'No hay insumos registrados.');
+                  }
+                  return StreamBuilder<List<Alerta>>(
+                    stream: ServiceRegistry.alertas.watchLocal(),
+                    builder: (context, alertSnapshot) {
+                      final alertas = alertSnapshot.data ?? [];
+                      return ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return AlertList(alertas: alertas);
+                          }
+                          final item = items[index - 1];
+                          return _InsumoCard(
+                            insumo: item,
+                            statusLabel: _inventoryLabel(item.status),
+                            statusColor: _inventoryColor(item.status),
+                            onTap: () {
+                              Navigator.of(context).pushNamed(
+                                AppRoutes.insumoDetail,
+                                arguments: InsumoDetailArgs(item),
+                              );
+                            },
+                          );
+                        },
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemCount: items.length + 1,
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

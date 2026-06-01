@@ -9,14 +9,23 @@ import '../widgets/loading_state.dart';
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+
   @override
   Widget build(BuildContext context) {
     final insumosStream = ServiceRegistry.insumos.watchLocal();
     final alertasStream = ServiceRegistry.alertas.watchLocal();
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Reportes de inventario'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Reportes de inventario',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: StreamBuilder<List<Insumo>>(
         stream: insumosStream,
@@ -48,6 +57,42 @@ class ReportsPage extends StatelessWidget {
               return ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            primaryPurple,
+                            Color(0xFF7B4FE0),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Reportes',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Visión general del inventario',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   _StatCard(label: 'Total insumos', value: total.toString()),
                   const SizedBox(height: 8),
                   _StatCard(label: 'Disponibles', value: available.toString()),

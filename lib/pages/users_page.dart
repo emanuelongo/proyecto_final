@@ -16,6 +16,9 @@ class _UsersPageState extends State<UsersPage> {
   final UserAdminService _service = UserAdminService();
   late Stream _usersStream;
 
+  static const Color primaryPurple = Color(0xFF8F5DFA);
+  static const Color accentGreen = Color(0xFFB0FA5D);
+
   @override
   void initState() {
     super.initState();
@@ -26,8 +29,15 @@ class _UsersPageState extends State<UsersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Usuarios'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        title: const Text(
+          'Usuarios',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: StreamBuilder(
         // 3. Usamos la variable persistente en el StreamBuilder
@@ -103,6 +113,7 @@ class _UserCard extends StatefulWidget {
 }
 
 class _UserCardState extends State<_UserCard> {
+  static const Color accentGreen = Color(0xFFB0FA5D);
   late UserRole _role;
   late AccountStatus _status;
   bool _saving = false;
@@ -191,6 +202,10 @@ class _UserCardState extends State<_UserCard> {
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                backgroundColor: accentGreen,
+                foregroundColor: Colors.black87,
+              ),
               child: _saving
                   ? const SizedBox(
                       height: 20,
