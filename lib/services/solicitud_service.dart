@@ -23,6 +23,9 @@ class SolicitudService {
     required Insumo insumo,
     required String reviewerId,
   }) async {
+    print('=== SolicitudService.approveSolicitud ===');
+    print('Aprobando solicitud ${solicitud.id} para insumo ${insumo.id}');
+
     if (!_rulesService.canTransitionSolicitud(solicitud.status, SolicitudStatus.approved)) {
       throw StateError('Transicion no permitida.');
     }
@@ -32,6 +35,7 @@ class SolicitudService {
       quantity: solicitud.quantity,
       userId: reviewerId,
     );
+    print('registerOutbound completado');
 
     final updated = solicitud.copyWith(
       status: SolicitudStatus.approved,
@@ -41,6 +45,7 @@ class SolicitudService {
     );
 
     await _solicitudRepository.upsertLocal(updated, markPending: true);
+    print('Solicitud actualizada en local');
   }
 
   Future<void> rejectSolicitud({
