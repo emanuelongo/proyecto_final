@@ -15,6 +15,10 @@ class MovimientoRepository {
   final MovimientoDao _dao;
   final CollectionReference<Map<String, dynamic>> _collection;
 
+  Stream<List<Movimiento>> watchLocal() {
+    return _dao.watchAll().map((rows) => rows.map(movimientoFromDb).toList());
+  }
+
   Stream<List<Movimiento>> watchLocalByInsumo(String insumoId) {
     return _dao.watchByInsumo(insumoId).map((rows) => rows.map(movimientoFromDb).toList());
   }

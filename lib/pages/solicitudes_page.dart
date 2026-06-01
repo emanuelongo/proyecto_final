@@ -113,8 +113,10 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
       );
     }
 
-    final isDocenteOrAdmin = profile.role == UserRole.docente || profile.role == UserRole.admin;
-    final isAuxiliarOrAdmin = profile.role == UserRole.auxiliar || profile.role == UserRole.admin;
+    final isDocente = profile.role == UserRole.docente;
+    final isAuxiliar = profile.role == UserRole.auxiliar;
+    final isAdmin = profile.role == UserRole.admin;
+    final isDocenteOrAdmin = isDocente || isAdmin;
 
     final stream = isDocenteOrAdmin
         ? ServiceRegistry.solicitudes.watchLocal()
@@ -131,8 +133,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
           ),
         ],
       ),
-      // CORRECCIÓN EFECTUADA: Se eliminó el conflicto y se unificó la lógica del Equipo 6
-      floatingActionButton: isAuxiliarOrAdmin
+      floatingActionButton: isAuxiliar
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).pushNamed(AppRoutes.createSolicitud),
               icon: const Icon(Icons.add),
@@ -195,7 +196,7 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
                             SyncStatusChip(status: item.syncStatus),
                           ],
                         ),
-                        onTap: isDocenteOrAdmin && item.status == SolicitudStatus.requested
+                        onTap: isDocente && item.status == SolicitudStatus.requested
                             ? () => _showReviewDialog(item, profile)
                             : null,
                       ),
@@ -215,52 +216,59 @@ class _SolicitudesPageState extends State<SolicitudesPage> {
   Future<void> _showReviewDialog(Solicitud solicitud, UserProfile profile) async {
     final reasonController = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    _ReviewAction? selectedAction;
 
     final result = await showDialog<_ReviewAction>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Revision de solicitud'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Cantidad solicitada: ${solicitud.quantity}'),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: reasonController,
-                    decoration: const InputDecoration(
-                      labelText: 'Motivo de rechazo (si aplica)',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'El motivo de rechazo es obligatorio.';
-                      }
-                      return null;
-                    },
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Revision de solicitud'),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Cantidad solicitada: ${solicitud.quantity}'),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: reasonController,
+                        decoration: const InputDecoration(
+                          labelText: 'Motivo de rechazo',
+                        ),
+                        validator: (value) {
+                          if (selectedAction == _ReviewAction.reject && (value == null || value.trim().isEmpty)) {
+                            return 'El motivo de rechazo es obligatorio.';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.of(context).pop(_ReviewAction.reject);
-                }
-              },
-              child: const Text('Rechazar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop(_ReviewAction.approve);
-              },
-              child: const Text('Aprobar'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    selectedAction = _ReviewAction.reject;
+                    if (formKey.currentState!.validate()) {
+                      Navigator.of(context).pop(_ReviewAction.reject);
+                    }
+                  },
+                  child: const Text('Rechazar'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    selectedAction = _ReviewAction.approve;
+                    Navigator.of(context).pop(_ReviewAction.approve);
+                  },
+                  child: const Text('Aprobar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
